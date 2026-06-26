@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureRAG Hub — Analyse Multi-Modèles GPU</title>
+    <meta name="description" content="Interface de test et scoring de sécurité multi-modèles IA — SecureRAG Hub">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ───── Design System ───── */
+        :root {
+            --bg-base: #050810;
+            --bg-layer1: #090d1a;
+            --bg-layer2: rgba(255,255,255,0.03);
+            --bg-layer3: rgba(255,255,255,0.06);
+
+            --primary: hsl(220, 95%, 62%);
+            --primary-dim: hsla(220,95%,62%,0.15);
+            --primary-glow: hsla(220,95%,62%,0.35);
+
+            --accept: hsl(142,72%,46%);
+            --accept-dim: hsla(142,72%,46%,0.12);
+            --accept-glow: hsla(142,72%,46%,0.4);
+
+            --block: hsl(0,82%,58%);
+            --block-dim: hsla(0,82%,58%,0.12);
+            --block-glow: hsla(0,82%,58%,0.4);
+
+            --warn: hsl(38,92%,55%);
+            --warn-dim: hsla(38,92%,55%,0.12);
+            --info: hsl(195,90%,50%);
+            --info-dim: hsla(195,90%,50%,0.12);
+
+            --text-1: #f0f4ff;
+            --text-2: #94a3b8;
+            --text-3: #475569;
+            --border: rgba(255,255,255,0.07);
+            --border-hi: rgba(255,255,255,0.15);
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 22px;
+            --ease: cubic-bezier(.4,0,.2,1);
+        }
+
+        *{box-sizing:border-box;margin:0;padding:0}
+        html{scroll-behavior:smooth}
+
+        body {
+            background: var(--bg-base);
+            color: var(--text-1);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(ellipse 60% 40% at 10% 0%, hsla(220,95%,62%,.06) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 50% at 90% 100%, hsla(142,72%,46%,.04) 0%, transparent 60%),
+                radial-gradient(ellipse 80% 60% at 50% 50%, hsla(0,82%,58%,.02) 0%, transparent 70%);
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar{width:6px;height:6px}
+        ::-webkit-scrollbar-track{background:rgba(0,0,0,.15)}
+        ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.09);border-radius:3px}
+        ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.18)}
+
+        /* ── Layout ── */
+        .app { max-width:1500px;margin:0 auto;padding:1.5rem 2rem;display:flex;flex-direction:column;gap:1.5rem }
+
+        /* ── Header ── */
+        .topbar {
+            display:flex;justify-content:space-between;align-items:center;
+            padding:1rem 1.5rem;
+            background:var(--bg-layer2);
+            border:1px solid var(--border);
+            border-radius:var(--radius-lg);
+            backdrop-filter:blur(20px);
+        }
+        .brand { display:flex;align-items:center;gap:1rem }
+        .brand-icon {
+            width:44px;height:44px;border-radius:12px;
+            background:linear-gradient(135deg,var(--primary) 0%,hsl(260,90%,65%) 100%);
+            display:flex;align-items:center;justify-content:center;
+            font-size:1.4rem;
+            box-shadow:0 0 20px var(--primary-glow);
+        }
+        .brand-text h1 {
+            font-family:'Outfit',sans-serif;font-size:1.35rem;font-weight:800;
+            background:linear-gradient(135deg,#fff 40%,var(--primary) 100%);
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+            letter-spacing:-0.02em;
+        }
+        .brand-text p{font-size:.78rem;color:var(--text-3);margin-top:.1rem}
+
+        .topbar-right{display:flex;align-items:center;gap:1rem}
+        .status-pill{
+            display:flex;align-items:center;gap:.5rem;
+            padding:.4rem .9rem;
+            background:var(--bg-layer2);border:1px solid var(--border);border-radius:30px;
+            font-size:.78rem;color:var(--text-2);
+        }
+        .dot{width:7px;height:7px;border-radius:50%;background:var(--accept);box-shadow:0 0 8px var(--accept-glow);animation:pulse 2s infinite}
+        .dot.red{background:var(--block);box-shadow:0 0 8px var(--block-glow);animation:none}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+        /* ── GPU Bar ── */
+        .gpu-bar {
+            background:var(--bg-layer2);border:1px solid var(--border);border-radius:var(--radius-md);
+            padding:.85rem 1.25rem;display:flex;align-items:center;gap:1.5rem;
+            font-size:.8rem;color:var(--text-2);
+        }
+        .gpu-label{font-weight:600;color:var(--info);display:flex;align-items:center;gap:.4rem;white-space:nowrap}
+        .vram-track{flex:1;height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+        .vram-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--primary),hsl(260,90%,65%));transition:width .6s var(--ease);box-shadow:0 0 8px var(--primary-glow)}
+        .gpu-stats{display:flex;gap:1.5rem;white-space:nowrap}
+        .gpu-stat span{color:var(--text-1);font-weight:600}
+
+        /* ── Two-column layout ── */
+        .workspace{display:grid;grid-template-columns:320px 1fr;gap:1.5rem;align-items:start}
+        @media(max-width:1024px){.workspace{grid-template-columns:1fr}}
+
+        /* ── Card ── */
+        .card {
+            background:var(--bg-layer2);
+            border:1px solid var(--border);
+            border-radius:var(--radius-lg);
+            padding:1.25rem;
+            backdrop-filter:blur(16px);
+            transition:border-color .25s var(--ease);
+        }
+        .card:hover{border-color:var(--border-hi)}
+        .card-title{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--text-1);display:flex;align-items:center;gap:.5rem}
+        .card-title .badge{font-size:.68rem;padding:.15rem .5rem;border-radius:30px;background:var(--primary-dim);color:var(--primary);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+
+        /* ── Sidebar ── */
+        .sidebar{display:flex;flex-direction:column;gap:1rem}
+
+        /* ── Model Cards ── */
+        .model-card {
+            border:1px solid var(--border);border-radius:var(--radius-md);padding:.9rem 1rem;
+            cursor:pointer;transition:all .2s var(--ease);position:relative;overflow:hidden;
+        }
+        .model-card::before {
+            content:'';position:absolute;inset:0;border-radius:var(--radius-md);
+            background:var(--primary-dim);opacity:0;transition:opacity .2s;
+        }
+        .model-card:hover{border-color:rgba(99,102,241,.35);transform:translateY(-1px)}
+        .model-card.active{border-color:var(--primary);box-shadow:0 0 20px var(--primary-dim)}
+        .model-card.active::before{opacity:1}
+        .model-card .mc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;position:relative;z-index:1}
+        .model-card .mc-name{font-weight:600;font-size:.88rem}
+        .model-card .mc-icon{font-size:1.1rem}
+        .model-card .mc-desc{font-size:.75rem;color:var(--text-2);margin-bottom:.6rem;position:relative;z-index:1}
+        .model-card .mc-foot{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
+        .type-badge{font-size:.65rem;padding:.12rem .45rem;border-radius:4px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+        .type-badge.bert{background:rgba(14,165,233,.15);color:#38bdf8;border:1px solid rgba(14,165,233,.25)}
+        .type-badge.lora{background:rgba(168,85,247,.15);color:#c084fc;border:1px solid rgba(168,85,247,.25)}
+        .type-badge.llm{background:rgba(236,72,153,.15);color:#f472b6;border:1px solid rgba(236,72,153,.25)}
+        .ready-badge{font-size:.65rem;padding:.1rem .4rem;border-radius:4px;font-weight:600}
+        .ready-badge.ready{background:var(--accept-dim);color:var(--accept);border:1px solid rgba(34,197,94,.25)}
+        .ready-badge.not{background:var(--block-dim);color:var(--block);border:1px solid rgba(239,68,68,.25)}
+        .loaded-badge{font-size:.65rem;padding:.1rem .4rem;border-radius:4px;background:var(--primary-dim);color:var(--primary);font-weight:700;border:1px solid rgba(99,102,241,.25)}
+
+        /* ── Main Panel ── */
+        .main{display:flex;flex-direction:column;gap:1.25rem}
+
+        /* ── Tabs ── */
+        .tabs{display:flex;gap:.5rem;padding:.25rem;background:var(--bg-layer2);border-radius:var(--radius-md);border:1px solid var(--border)}
+        .tab{background:none;border:none;color:var(--text-2);font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:600;padding:.5rem 1.1rem;cursor:pointer;border-radius:10px;transition:all .2s var(--ease);white-space:nowrap}
+        .tab:hover{color:var(--text-1);background:var(--bg-layer3)}
+        .tab.active{background:var(--primary-dim);color:var(--primary);box-shadow:0 0 12px var(--primary-dim)}
+        .tab-panel{display:none}.tab-panel.active{display:flex;flex-direction:column;gap:1.25rem}
+
+        /* ── Textarea ── */
+        .input-area{
+            width:100%;min-height:160px;max-height:320px;
+            background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:var(--radius-md);
+            color:var(--text-1);padding:1rem;font-family:'Inter',sans-serif;font-size:.93rem;
+            resize:vertical;transition:border-color .2s var(--ease),box-shadow .2s var(--ease);
+            line-height:1.6;
+        }
+        .input-area:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-dim)}
+        .input-area::placeholder{color:var(--text-3)}
+
+        /* ── Buttons ── */
+        .btn{
+            display:inline-flex;align-items:center;gap:.5rem;
+            padding:.7rem 1.4rem;border-radius:var(--radius-sm);border:none;
+            font-weight:600;font-size:.88rem;cursor:pointer;transition:all .2s var(--ease);
+            font-family:'Inter',sans-serif;
+        }
+        .btn-primary{background:var(--primary);color:#fff;box-shadow:0 4px 15px var(--primary-dim)}
+        .btn-primary:hover{filter:brightness(1.15);transform:translateY(-1px);box-shadow:0 6px 20px var(--primary-glow)}
+        .btn-primary:disabled{filter:none;transform:none;cursor:not-allowed;opacity:.5;box-shadow:none}
+        .btn-secondary{background:var(--bg-layer3);border:1px solid var(--border);color:var(--text-2)}
+        .btn-secondary:hover{background:rgba(255,255,255,.08);color:var(--text-1);border-color:var(--border-hi)}
+        .btn-success{background:var(--accept);color:#fff;box-shadow:0 4px 15px var(--accept-dim)}
+        .btn-success:hover{filter:brightness(1.1);transform:translateY(-1px)}
+        .btn-danger{background:var(--block);color:#fff;box-shadow:0 4px 15px var(--block-dim)}
+        .btn-danger:hover{filter:brightness(1.1);transform:translateY(-1px)}
+        .btn-group{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
+
+        /* ── Spinner ── */
+        .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.15);border-top:2px solid currentColor;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;flex-shrink:0}
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        /* ────────────────────────────────────────────────
+           CONSENSUS BANNER
+        ─────────────────────────────────────────────── */
+        .consensus-banner {
+            border-radius:var(--radius-lg);padding:1.5rem 2rem;
+            display:flex;align-items:center;justify-content:space-between;gap:1.5rem;
+            animation:slideIn .4s var(--ease);
+        }
+        .consensus-banner.block{
+            background:linear-gradient(135deg, hsla(0,82%,10%,.9), hsla(0,82%,15%,.5));
+            border:1px solid rgba(239,68,68,.4);
+            box-shadow:0 0 40px hsla(0,82%,58%,.15), inset 0 0 60px hsla(0,82%,58%,.05);
+        }
+        .consensus-banner.accept{
+            background:linear-gradient(135deg, hsla(142,72%,8%,.9), hsla(142,72%,14%,.5));
+            border:1px solid rgba(34,197,94,.4);
+            box-shadow:0 0 40px hsla(142,72%,46%,.15), inset 0 0 60px hsla(142,72%,46%,.05);
+        }
+        .consensus-banner.uncertain{
+            background:linear-gradient(135deg, hsla(38,92%,8%,.9), hsla(38,92%,14%,.5));
+            border:1px solid rgba(234,179,8,.4);
+            box-shadow:0 0 40px hsla(38,92%,55%,.15);
+        }
+        @keyframes slideIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+
+        .verdict-main{display:flex;align-items:center;gap:1rem}
+        .verdict-icon{font-size:3rem;line-height:1}
+        .verdict-text h2{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:900;letter-spacing:-.03em}
+        .verdict-text h2.block{color:var(--block)}
+        .verdict-text h2.accept{color:var(--accept)}
+        .verdict-text h2.uncertain{color:var(--warn)}
+        .verdict-text p{font-size:.85rem;color:var(--text-2);margin-top:.3rem}
+
+        .consensus-stats{display:flex;gap:1rem}
+        .c-stat{text-align:center;background:rgba(0,0,0,.25);padding:.6rem 1rem;border-radius:var(--radius-sm);min-width:70px}
+        .c-stat-val{font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800}
+        .c-stat-val.block{color:var(--block)}
+        .c-stat-val.accept{color:var(--accept)}
+        .c-stat-val.pct{color:var(--text-1)}
+        .c-stat-lbl{font-size:.65rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-top:.2rem}
+
+        /* ── Models Grid Results ── */
+        .models-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+
+        .result-card {
+            background:var(--bg-layer2);border:1px solid var(--border);border-radius:var(--radius-md);
+            padding:1.1rem;transition:all .25s var(--ease);animation:fadeUp .35s var(--ease);
+        }
+        .result-card.verdict-block{border-color:rgba(239,68,68,.3);background:linear-gradient(135deg,hsla(0,82%,58%,.05),transparent)}
+        .result-card.verdict-accept{border-color:rgba(34,197,94,.3);background:linear-gradient(135deg,hsla(142,72%,46%,.05),transparent)}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+        .rc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+        .rc-model{display:flex;align-items:center;gap:.5rem}
+        .rc-icon{font-size:1.3rem}
+        .rc-name{font-weight:600;font-size:.85rem}
+        .rc-type{font-size:.7rem}
+
+        .verdict-pill{
+            display:inline-flex;align-items:center;gap:.35rem;
+            padding:.35rem .9rem;border-radius:30px;font-weight:800;font-size:.85rem;letter-spacing:.04em;
+        }
+        .verdict-pill.block{background:var(--block-dim);color:var(--block);border:1px solid rgba(239,68,68,.3)}
+        .verdict-pill.accept{background:var(--accept-dim);color:var(--accept);border:1px solid rgba(34,197,94,.3)}
+        .verdict-pill.unknown{background:var(--warn-dim);color:var(--warn);border:1px solid rgba(234,179,8,.3)}
+        .verdict-pill.error{background:rgba(99,102,241,.1);color:var(--text-2);border:1px solid var(--border)}
+
+        .rc-body{font-size:.8rem;color:var(--text-2)}
+        .rc-body .label{font-size:.72rem;color:var(--text-3);margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.05em}
+
+        /* Threat Score Bar */
+        .threat-bar-wrap{margin:.75rem 0}
+        .threat-bar-labels{display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-3);margin-bottom:.3rem}
+        .threat-bar-track{height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+        .threat-bar-fill{height:100%;border-radius:4px;transition:width .6s var(--ease)}
+        .threat-bar-fill.high{background:linear-gradient(90deg,var(--warn),var(--block))}
+        .threat-bar-fill.medium{background:var(--warn)}
+        .threat-bar-fill.low{background:linear-gradient(90deg,var(--primary),var(--accept))}
+
+        /* Probabilities */
+        .prob-rows{display:flex;flex-direction:column;gap:.3rem;margin-top:.5rem}
+        .prob-row{display:flex;align-items:center;gap:.5rem;font-size:.75rem}
+        .prob-label{flex:0 0 120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2)}
+        .prob-track{flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+        .prob-fill{height:100%;border-radius:3px;transition:width .6s var(--ease)}
+        .prob-fill.top{background:var(--primary)}
+        .prob-fill.rest{background:rgba(255,255,255,.15)}
+        .prob-pct{flex:0 0 38px;text-align:right;color:var(--text-3)}
+
+        /* LLM response */
+        .llm-response{
+            font-family:'Fira Code',monospace;font-size:.75rem;line-height:1.55;
+            color:#cbd5e1;white-space:pre-wrap;
+            background:rgba(0,0,0,.25);padding:.75rem;border-radius:8px;
+            border:1px solid rgba(255,255,255,.04);max-height:160px;overflow-y:auto;margin-top:.5rem;
+        }
+
+        .rc-meta{display:flex;justify-content:space-between;align-items:center;margin-top:.75rem;padding-top:.6rem;border-top:1px solid var(--border);font-size:.72rem;color:var(--text-3)}
+        .rc-meta .elapsed{color:var(--text-2)}
+
+        /* ── Error state ── */
+        .rc-error{color:var(--block);font-size:.8rem;padding:.5rem;background:var(--block-dim);border-radius:6px;margin-top:.5rem}
+
+        /* ── Empty/Placeholder ── */
+        .placeholder{
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            gap:1rem;padding:3rem 2rem;color:var(--text-3);text-align:center;
+        }
+        .placeholder-icon{font-size:3rem;opacity:.4}
+        .placeholder p{font-size:.88rem;max-width:360px;line-height:1.6}
+
+        /* ── Sandbox single model ── */
+        .sandbox-result{
+            background:var(--bg-layer2);border:1px solid var(--border);border-radius:var(--radius-md);
+            padding:1.25rem;animation:fadeUp .35s var(--ease);
+        }
+        .sandbox-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)}
+        .sandbox-header .title{font-weight:700;font-size:.9rem;color:var(--text-2);text-transform:uppercase;letter-spacing:.06em}
+
+        /* ── Batch Runner ── */
+        .batch-layout{display:grid;grid-template-columns:280px 1fr;gap:1.25rem}
+        @media(max-width:800px){.batch-layout{grid-template-columns:1fr}}
+        .scripts-sidebar{max-height:580px;overflow-y:auto;display:flex;flex-direction:column;gap:.5rem}
+        .script-item{
+            padding:.7rem 1rem;border:1px solid var(--border);border-radius:var(--radius-sm);
+            cursor:pointer;transition:all .2s var(--ease);
+        }
+        .script-item:hover{border-color:var(--border-hi);background:var(--bg-layer3)}
+        .script-item.selected{border-color:var(--primary);background:var(--primary-dim)}
+        .script-item .si-name{font-size:.82rem;font-weight:600}
+        .script-item .si-cat{font-size:.72rem;color:var(--text-3);margin-top:.15rem}
+
+        .test-list{max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem}
+        .test-item{
+            display:flex;justify-content:space-between;align-items:center;
+            padding:.55rem .9rem;border:1px solid var(--border);border-radius:var(--radius-sm);
+            cursor:pointer;transition:all .15s;font-size:.8rem;
+        }
+        .test-item:hover{background:var(--bg-layer3);border-color:var(--border-hi)}
+        .test-item.active{border-color:var(--primary);background:var(--primary-dim)}
+        .test-item .ti-id{font-family:'Fira Code',monospace;font-size:.72rem;color:var(--primary);font-weight:600}
+
+        .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1rem}
+        .stat-box{background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.75rem;text-align:center}
+        .stat-box .sv{font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:800}
+        .stat-box .sl{font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-top:.2rem}
+        .stat-box.pass .sv{color:var(--accept)}
+        .stat-box.fail .sv{color:var(--block)}
+        .stat-box.acc .sv{color:var(--info)}
+
+        .exec-log{
+            background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:var(--radius-sm);
+            height:340px;overflow-y:auto;padding:.9rem;
+            font-family:'Fira Code',monospace;font-size:.75rem;
+            display:flex;flex-direction:column;gap:.3rem;
+        }
+        .log-entry{display:flex;gap:.6rem;line-height:1.45;padding:.2rem 0;border-bottom:1px solid rgba(255,255,255,.025)}
+        .log-tag{font-weight:700;flex-shrink:0;width:54px}
+        .log-tag.pass{color:var(--accept)}
+        .log-tag.fail{color:var(--block)}
+        .log-tag.info{color:var(--info)}
+        .log-tag.err{color:var(--block)}
+        .log-msg{color:#cbd5e1;word-break:break-word}
+
+        /* ── Loading overlay ── */
+        .loading-all{
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            gap:1rem;padding:2rem;color:var(--text-2);
+        }
+        .loading-all .big-spin{width:40px;height:40px;border:3px solid rgba(255,255,255,.06);border-top:3px solid var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+        .loading-all p{font-size:.85rem}
+        .loading-all small{font-size:.75rem;color:var(--text-3)}
+
+        /* ── Responsive ── */
+        @media(max-width:700px){
+            .app{padding:1rem}
+            .topbar{flex-direction:column;align-items:flex-start;gap:.75rem}
+            .models-grid{grid-template-columns:1fr}
+            .consensus-banner{flex-direction:column}
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+
+    <!-- ── Topbar ── -->
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-icon">🛡️</div>
+            <div class="brand-text">
+                <h1>SecureRAG Hub</h1>
+                <p>Analyse de sécurité multi-modèles — GPU Inference Engine</p>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <div class="status-pill">
+                <span class="dot" id="srv-dot"></span>
+                <span id="srv-label">Connexion…</span>
+            </div>
+            <div class="status-pill" id="gpu-pill" style="display:none">
+                ⚡ <span id="gpu-label">GPU</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── GPU Bar ── -->
+    <div class="gpu-bar" id="gpu-bar" style="display:none">
+        <span class="gpu-label">⚡ VRAM</span>
+        <div class="vram-track"><div class="vram-fill" id="vram-fill" style="width:0%"></div></div>
+        <div class="gpu-stats">
+            <div><span id="vram-used">0</span> GB utilisés / <span id="vram-total">0</span> GB total</div>
+            <div>Chargés : <span id="models-loaded">0</span> modèle(s)</div>
+        </div>
+    </div>
+
+    <!-- ── Workspace ── -->
+    <div class="workspace">
+
+        <!-- Sidebar: Model List -->
+        <aside class="sidebar">
+            <div class="card">
+                <div class="card-title">
+                    🤖 Modèles
+                    <span class="badge" id="models-count">…</span>
+                </div>
+                <div id="model-list" style="display:flex;flex-direction:column;gap:.6rem">
+                    <div class="loading-all"><div class="big-spin"></div><p>Chargement…</p></div>
+                </div>
+                <div style="margin-top:.75rem;display:flex;gap:.5rem">
+                    <button class="btn btn-secondary" style="flex:1;font-size:.78rem;padding:.5rem" onclick="loadModels()">↺ Actualiser</button>
+                    <button class="btn btn-secondary" style="flex:1;font-size:.78rem;padding:.5rem" id="btn-load-all" onclick="loadAllModelsInVRAM()">⬆ Tout charger</button>
+                </div>
+            </div>
+
+            <!-- Scripts -->
+            <div class="card">
+                <div class="card-title">📂 Scripts de test</div>
+                <div id="scripts-list" style="display:flex;flex-direction:column;gap:.4rem">
+                    <p style="font-size:.78rem;color:var(--text-3)">Aucun script trouvé.</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Panel -->
+        <main class="main">
+            <!-- Tabs -->
+            <div class="tabs" role="tablist">
+                <button class="tab active" id="tab-all-btn" onclick="switchTab('all')" role="tab">🔍 Analyse Tous Modèles</button>
+                <button class="tab" id="tab-single-btn" onclick="switchTab('single')" role="tab">⚡ Sandbox Mono-Modèle</button>
+                <button class="tab" id="tab-batch-btn" onclick="switchTab('batch')" role="tab">📊 Batch Runner</button>
+            </div>
+
+            <!-- ════════════════════════════════
+                 TAB 1: ALL MODELS
+            ════════════════════════════════ -->
+            <div class="tab-panel active" id="panel-all">
+                <div class="card" style="padding:1.25rem">
+                    <label style="font-size:.8rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:.6rem">
+                        📧 Contenu à analyser (email, log, URL, requête suspecte…)
+                    </label>
+                    <textarea class="input-area" id="all-prompt" placeholder="Collez ici votre email, log de sécurité ou texte suspect…&#10;&#10;Exemple : Votre compte PayPal a été suspendu. Cliquez ici pour vérifier votre identité : http://paypa1-secure.xyz/verify?token=abc123"></textarea>
+                    <div class="btn-group" style="margin-top:.9rem">
+                        <button class="btn btn-primary" id="btn-analyze-all" onclick="analyzeAll()">
+                            🔍 Analyser avec tous les modèles
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearAll()">Effacer</button>
+                        <button class="btn btn-secondary" id="btn-demo" onclick="loadDemo()">🎭 Demo</button>
+                    </div>
+                </div>
+
+                <!-- Consensus Banner (hidden by default) -->
+                <div id="consensus-zone" style="display:none"></div>
+
+                <!-- Results grid -->
+                <div id="all-results-zone">
+                    <div class="placeholder">
+                        <div class="placeholder-icon">🛡️</div>
+                        <p>Saisissez un texte et cliquez sur <strong>Analyser avec tous les modèles</strong> pour obtenir un verdict collectif.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════════════════════════════
+                 TAB 2: SINGLE MODEL SANDBOX
+            ════════════════════════════════ -->
+            <div class="tab-panel" id="panel-single">
+                <div class="card">
+                    <div class="card-title">⚡ Sandbox — Inférence Mono-Modèle</div>
+                    <p style="font-size:.8rem;color:var(--text-2);margin-bottom:.9rem">Sélectionnez un modèle dans la liste à gauche, puis entrez votre texte.</p>
+                    <label style="font-size:.8rem;font-weight:600;color:var(--text-2);display:block;margin-bottom:.5rem">Modèle actif : <span id="single-model-label" style="color:var(--primary)">—</span></label>
+                    <textarea class="input-area" id="single-prompt" placeholder="Texte à analyser…"></textarea>
+                    <div class="btn-group" style="margin-top:.9rem">
+                        <button class="btn btn-primary" id="btn-single-infer" onclick="singleInfer()">Analyser</button>
+                        <button class="btn btn-secondary" onclick="document.getElementById('single-prompt').value='';document.getElementById('single-result').style.display='none'">Effacer</button>
+                    </div>
+                </div>
+                <div id="single-result" style="display:none"></div>
+            </div>
+
+            <!-- ════════════════════════════════
+                 TAB 3: BATCH RUNNER
+            ════════════════════════════════ -->
+            <div class="tab-panel" id="panel-batch">
+                <div class="card">
+                    <div class="card-title">📊 Batch Runner — Scripts de Test</div>
+                    <div class="batch-layout">
+                        <div>
+                            <p style="font-size:.78rem;color:var(--text-2);margin-bottom:.6rem">Tests du script :</p>
+                            <div class="test-list" id="test-list">
+                                <p style="font-size:.78rem;color:var(--text-3);font-style:italic">Sélectionnez un script à gauche.</p>
+                            </div>
+                            <button class="btn btn-primary" id="btn-run-batch" disabled onclick="runBatch()" style="width:100%;justify-content:center">
+                                ▶ Lancer les tests
+                            </button>
+                        </div>
+                        <div>
+                            <div class="stats-row">
+                                <div class="stat-box"><div class="sv" id="b-total">0</div><div class="sl">Total</div></div>
+                                <div class="stat-box pass"><div class="sv" id="b-pass">0</div><div class="sl">Réussis</div></div>
+                                <div class="stat-box fail"><div class="sv" id="b-fail">0</div><div class="sl">Échoués</div></div>
+                                <div class="stat-box acc"><div class="sv" id="b-acc">—</div><div class="sl">Précision</div></div>
+                            </div>
+                            <div class="exec-log" id="exec-log">
+                                <div class="log-entry"><span class="log-tag info">[INFO]</span><span class="log-msg">En attente de lancement…</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════════ -->
+<script>
+// ── State ─────────────────────────────────────────────────
+let allModels = [];
+let currentModel = null;
+let selectedScript = null;
+let scriptTests = [];
+
+// ── Init ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    pingServer();
+    loadModels();
+    loadScripts();
+    refreshGPU();
+    setInterval(refreshGPU, 8000);
+    setInterval(pingServer, 15000);
+});
+
+// ── Server Ping ────────────────────────────────────────────
+async function pingServer() {
+    const dot = document.getElementById('srv-dot');
+    const lbl = document.getElementById('srv-label');
+    try {
+        const r = await fetch('/api/models');
+        if (r.ok) { dot.className='dot'; lbl.textContent='Serveur connecté'; }
+        else throw new Error();
+    } catch {
+        dot.className='dot red'; lbl.textContent='Serveur hors-ligne';
+    }
+}
+
+// ── GPU Status ─────────────────────────────────────────────
+async function refreshGPU() {
+    try {
+        const r = await fetch('/api/gpu-status');
+        const d = await r.json();
+        if (!d.available) return;
+        document.getElementById('gpu-bar').style.display = 'flex';
+        document.getElementById('gpu-pill').style.display = 'flex';
+        const dev = d.devices[0];
+        document.getElementById('vram-used').textContent = dev.allocated_gb;
+        document.getElementById('vram-total').textContent = dev.total_gb;
+        document.getElementById('vram-fill').style.width = dev.utilization_pct + '%';
+        document.getElementById('models-loaded').textContent = d.loaded_models.length;
+        document.getElementById('gpu-label').textContent = dev.name.split(' ').slice(-2).join(' ');
+    } catch {}
+}
+
+// ── Load Models ────────────────────────────────────────────
+async function loadModels() {
+    const container = document.getElementById('model-list');
+    container.innerHTML = '<div class="loading-all"><div class="big-spin"></div><p>Chargement…</p></div>';
+    try {
+        const r = await fetch('/api/models');
+        const d = await r.json();
+        allModels = d.models;
+        document.getElementById('models-count').textContent = allModels.length;
+
+        container.innerHTML = '';
+        allModels.forEach((m, i) => {
+            const card = document.createElement('div');
+            card.className = 'model-card' + (i === 0 ? ' active' : '');
+            card.setAttribute('data-id', m.id);
+            if (i === 0) currentModel = m.id;
+            card.onclick = () => selectModel(m.id);
+
+            const typeClass = m.type === 'bert' ? 'bert' : (m.type === 'lora' ? 'lora' : 'llm');
+            const readyClass = m.status === 'READY' ? 'ready' : 'not';
+            const readyLabel = m.status === 'READY' ? 'READY' : m.status;
+            const loadedBadge = m.loaded ? '<span class="loaded-badge">IN VRAM</span>' : '';
+
+            card.innerHTML = `
+                <div class="mc-head">
+                    <div class="mc-model" style="display:flex;align-items:center;gap:.4rem">
+                        <span class="mc-icon">${m.icon}</span>
+                        <span class="mc-name">${m.name}</span>
+                    </div>
+                    ${loadedBadge}
+                </div>
+                <div class="mc-desc">${m.description}</div>
+                <div class="mc-foot">
+                    <span class="type-badge ${typeClass}">${typeClass.toUpperCase()}</span>
+                    <span class="ready-badge ${readyClass}">${readyLabel}</span>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+
+        updateSingleLabel();
+    } catch(e) {
+        container.innerHTML = `<p style="color:var(--block);font-size:.8rem">Erreur: ${e.message}</p>`;
+    }
+}
+
+function selectModel(id) {
+    currentModel = id;
+    document.querySelectorAll('.model-card').forEach(c => c.classList.toggle('active', c.dataset.id === id));
+    updateSingleLabel();
+}
+
+function updateSingleLabel() {
+    const m = allModels.find(x => x.id === currentModel);
+    document.getElementById('single-model-label').textContent = m ? `${m.icon} ${m.name}` : '—';
+    document.getElementById('btn-single-infer').disabled = !m || m.status !== 'READY';
+}
+
+async function loadAllModelsInVRAM() {
+    const btn = document.getElementById('btn-load-all');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Chargement…';
+    const ready = allModels.filter(m => m.status === 'READY' && !m.loaded);
+    for (const m of ready) {
+        try {
+            await fetch('/api/load-model', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:m.id})});
+        } catch {}
+    }
+    await loadModels();
+    await refreshGPU();
+    btn.disabled = false;
+    btn.innerHTML = '⬆ Tout charger';
+}
+
+// ── Scripts ────────────────────────────────────────────────
+async function loadScripts() {
+    const container = document.getElementById('scripts-list');
+    try {
+        const r = await fetch('/api/test-scripts');
+        const d = await r.json();
+        if (!d.scripts || d.scripts.length === 0) {
+            container.innerHTML = '<p style="font-size:.78rem;color:var(--text-3)">Aucun fichier .txt dans security/tests/</p>';
+            return;
+        }
+        container.innerHTML = '';
+        d.scripts.forEach(s => {
+            const item = document.createElement('div');
+            item.className = 'script-item';
+            item.onclick = () => selectScript(s.name, item);
+            item.innerHTML = `<div class="si-name">${s.name}</div><div class="si-cat">${s.category} — ${(s.size_bytes/1024).toFixed(1)} KB</div>`;
+            container.appendChild(item);
+        });
+    } catch (e) {
+        container.innerHTML = `<p style="font-size:.78rem;color:var(--block)">Erreur: ${e.message}</p>`;
+    }
+}
+
+async function selectScript(name, el) {
+    selectedScript = name;
+    document.querySelectorAll('.script-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('btn-run-batch').removeAttribute('disabled');
+    const list = document.getElementById('test-list');
+    list.innerHTML = '<div style="color:var(--text-3);font-size:.78rem;font-style:italic">Chargement…</div>';
+    try {
+        const r = await fetch('/api/test-scripts/view?name=' + encodeURIComponent(name));
+        const d = await r.json();
+        scriptTests = d.tests || [];
+        list.innerHTML = '';
+        scriptTests.forEach(t => {
+            const item = document.createElement('div');
+            item.className = 'test-item';
+            item.onclick = () => { document.getElementById('single-prompt').value = t.text; switchTab('single'); };
+            const lbl = t.expected_label || 'SOC';
+            const lblCls = lbl.toLowerCase().includes('phish') ? 'block' : (lbl.toLowerCase().includes('safe') ? 'accept' : 'unknown');
+            item.innerHTML = `
+                <div>
+                    <span class="ti-id">${t.id}</span>
+                    <span style="margin-left:.5rem;font-size:.78rem;color:var(--text-2)">${(t.title || t.text).substring(0,50)}…</span>
+                </div>
+                <span class="verdict-pill ${lblCls}" style="font-size:.65rem;padding:.15rem .5rem">${lbl}</span>
+            `;
+            list.appendChild(item);
+        });
+    } catch(e) {
+        list.innerHTML = `<p style="color:var(--block);font-size:.78rem">Erreur: ${e.message}</p>`;
+    }
+}
+
+// ── Tabs ───────────────────────────────────────────────────
+function switchTab(name) {
+    ['all','single','batch'].forEach(t => {
+        document.getElementById(`panel-${t}`).classList.toggle('active', t === name);
+        document.getElementById(`tab-${t}-btn`).classList.toggle('active', t === name);
+    });
+}
+
+// ── Demo data ──────────────────────────────────────────────
+const DEMO_TEXTS = [
+    `Subject: Urgent — Your PayPal account has been LIMITED
+
+Dear Customer,
+
+We have noticed suspicious activity on your PayPal account. To restore full access, you must verify your information immediately.
+
+Click here to verify: http://paypa1-secure.info/verify?account=limited&token=Xk9mP2a
+
+If you don't verify within 24 hours, your account will be permanently suspended.
+
+PayPal Security Team`,
+
+    `User: admin
+Source IP: 192.168.1.105
+Event: Failed login attempt × 47 in 3 minutes
+Process: powershell.exe -EncodedCommand SGVsbG8gV29ybGQ=
+Registry: HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run → malware.exe
+DNS Query: C2-server-xyz.tor.network`,
+
+    `Hello team,
+
+Please find attached the Q3 financial report as requested in our meeting yesterday.
+The document contains updated projections for FY2024.
+
+Best regards,
+Sarah Johnson
+Finance Department`,
+];
+let demoIdx = 0;
+function loadDemo() {
+    document.getElementById('all-prompt').value = DEMO_TEXTS[demoIdx % DEMO_TEXTS.length];
+    demoIdx++;
+}
+
+function clearAll() {
+    document.getElementById('all-prompt').value = '';
+    document.getElementById('consensus-zone').style.display = 'none';
+    document.getElementById('all-results-zone').innerHTML = `
+        <div class="placeholder">
+            <div class="placeholder-icon">🛡️</div>
+            <p>Saisissez un texte et cliquez sur <strong>Analyser avec tous les modèles</strong> pour obtenir un verdict collectif.</p>
+        </div>`;
+}
+
+// ── ANALYZE ALL ────────────────────────────────────────────
+async function analyzeAll() {
+    const text = document.getElementById('all-prompt').value.trim();
+    if (!text) { alert('Veuillez saisir un texte.'); return; }
+
+    const btn = document.getElementById('btn-analyze-all');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Analyse en cours…';
+
+    // Show loading grid
+    const zone = document.getElementById('all-results-zone');
+    zone.innerHTML = `<div class="loading-all" style="padding:3rem">
+        <div class="big-spin"></div>
+        <p>Inférence simultanée sur tous les modèles…</p>
+        <small>Les LLMs sont traités séquentiellement pour préserver la VRAM</small>
+    </div>`;
+    document.getElementById('consensus-zone').style.display = 'none';
+
+    const t0 = performance.now();
+    try {
+        const r = await fetch('/api/predict-all', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({prompt: text, max_new_tokens: 150}),
+        });
+        const d = await r.json();
+        const elapsed = ((performance.now()-t0)/1000).toFixed(1);
+
+        if (d.error) { zone.innerHTML = `<p style="color:var(--block)">${d.error}</p>`; return; }
+
+        renderConsensus(d.consensus, elapsed);
+        renderAllResults(d.results);
+    } catch(e) {
+        zone.innerHTML = `<p style="color:var(--block)">Erreur réseau: ${e.message}</p>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '🔍 Analyser avec tous les modèles';
+        refreshGPU();
+    }
+}
+
+function renderConsensus(c, elapsed) {
+    const zone = document.getElementById('consensus-zone');
+    const verdictClass = c.verdict.toLowerCase();
+    const icons = {BLOCK:'🚨', ACCEPT:'✅', UNCERTAIN:'⚠️'};
+    const msgs = {
+        BLOCK: `${c.block_votes} modèle(s) sur ${c.total_votes} détectent une menace`,
+        ACCEPT: `${c.accept_votes} modèle(s) sur ${c.total_votes} considèrent ce contenu comme légitime`,
+        UNCERTAIN: `Les modèles sont partagés — analyse manuelle recommandée`,
+    };
+    zone.style.display = 'block';
+    zone.innerHTML = `
+        <div class="consensus-banner ${verdictClass}">
+            <div class="verdict-main">
+                <div class="verdict-icon">${icons[c.verdict]}</div>
+                <div class="verdict-text">
+                    <h2 class="${verdictClass}">VERDICT : ${c.verdict}</h2>
+                    <p>${msgs[c.verdict]} — Consensus ${c.confidence_pct}% — ${elapsed}s</p>
+                </div>
+            </div>
+            <div class="consensus-stats">
+                <div class="c-stat">
+                    <div class="c-stat-val block">${c.block_votes}</div>
+                    <div class="c-stat-lbl">BLOCK</div>
+                </div>
+                <div class="c-stat">
+                    <div class="c-stat-val accept">${c.accept_votes}</div>
+                    <div class="c-stat-lbl">ACCEPT</div>
+                </div>
+                <div class="c-stat">
+                    <div class="c-stat-val pct">${c.confidence_pct}%</div>
+                    <div class="c-stat-lbl">Confiance</div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function renderAllResults(results) {
+    const zone = document.getElementById('all-results-zone');
+    if (!results || results.length === 0) {
+        zone.innerHTML = '<p style="color:var(--text-3);font-size:.85rem">Aucun résultat.</p>';
+        return;
+    }
+    zone.innerHTML = '<div class="models-grid" id="models-grid"></div>';
+    const grid = document.getElementById('models-grid');
+    results.forEach((res, idx) => {
+        const card = document.createElement('div');
+        card.style.animationDelay = `${idx*0.07}s`;
+
+        if (res.error) {
+            const model = allModels.find(m => m.id === res.model_id) || {};
+            card.className = 'result-card';
+            card.innerHTML = `
+                <div class="rc-head">
+                    <div class="rc-model">
+                        <span class="rc-icon">${model.icon || '🤖'}</span>
+                        <span class="rc-name">${model.name || res.model_id}</span>
+                    </div>
+                    <span class="verdict-pill error">ERREUR</span>
+                </div>
+                <div class="rc-error">${escHtml(res.error)}</div>
+            `;
+        } else {
+            const verdictClass = res.verdict ? res.verdict.toLowerCase() : 'unknown';
+            card.className = `result-card verdict-${verdictClass}`;
+            const typeClass = res.model_type === 'bert' ? 'bert' : (res.model_type === 'lora' ? 'lora' : 'llm');
+            const score = res.threat_score || 0;
+            const scoreClass = score >= 70 ? 'high' : (score >= 40 ? 'medium' : 'low');
+
+            let bodyHtml = '';
+
+            if (res.type === 'classification' && res.probabilities) {
+                const entries = Object.entries(res.probabilities).sort((a,b) => b[1]-a[1]);
+                const top = entries[0]?.[0];
+                bodyHtml += `<div class="label">Distribution des probabilités</div><div class="prob-rows">`;
+                entries.forEach(([lbl, prob]) => {
+                    const pct = (prob*100).toFixed(1);
+                    bodyHtml += `<div class="prob-row">
+                        <span class="prob-label" title="${lbl}">${lbl}</span>
+                        <div class="prob-track"><div class="prob-fill ${lbl===top?'top':'rest'}" style="width:${pct}%"></div></div>
+                        <span class="prob-pct">${pct}%</span>
+                    </div>`;
+                });
+                bodyHtml += `</div>`;
+            } else if (res.type === 'generative' && res.prediction) {
+                bodyHtml += `<div class="label">Réponse du modèle</div><div class="llm-response">${escHtml(res.prediction)}</div>`;
+            }
+
+            card.innerHTML = `
+                <div class="rc-head">
+                    <div class="rc-model">
+                        <span class="rc-icon">${res.icon || '🤖'}</span>
+                        <div>
+                            <div class="rc-name">${res.model_name || res.model_id}</div>
+                            <span class="type-badge ${typeClass}" style="font-size:.6rem">${typeClass}</span>
+                        </div>
+                    </div>
+                    <span class="verdict-pill ${verdictClass}">${verdictClass === 'block' ? '🚨' : (verdictClass === 'accept' ? '✅' : '❓')} ${res.verdict || 'N/A'}</span>
+                </div>
+                <div class="threat-bar-wrap">
+                    <div class="threat-bar-labels">
+                        <span>Risque</span>
+                        <span><strong>${score}%</strong></span>
+                    </div>
+                    <div class="threat-bar-track">
+                        <div class="threat-bar-fill ${scoreClass}" style="width:${score}%"></div>
+                    </div>
+                </div>
+                <div class="rc-body">${bodyHtml}</div>
+                <div class="rc-meta">
+                    <span>${res.type === 'classification' ? 'Classification' : 'Génératif'}</span>
+                    <span class="elapsed">⏱ ${res.elapsed_s}s</span>
+                </div>
+            `;
+        }
+        grid.appendChild(card);
+    });
+}
+
+// ── SINGLE MODEL ───────────────────────────────────────────
+async function singleInfer() {
+    const text = document.getElementById('single-prompt').value.trim();
+    if (!text) { alert('Veuillez saisir un texte.'); return; }
+    if (!currentModel) { alert('Sélectionnez un modèle.'); return; }
+
+    const btn = document.getElementById('btn-single-infer');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> En cours…';
+
+    const resultBox = document.getElementById('single-result');
+    resultBox.style.display = 'none';
+
+    const t0 = performance.now();
+    try {
+        const r = await fetch('/api/predict', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({model: currentModel, prompt: text, max_new_tokens: 200}),
+        });
+        const d = await r.json();
+        const elapsed = ((performance.now()-t0)/1000).toFixed(2);
+
+        resultBox.style.display = 'block';
+
+        if (d.error) {
+            resultBox.innerHTML = `<div class="sandbox-result"><div class="rc-error">${escHtml(d.error)}</div></div>`;
+            return;
+        }
+
+        const model = allModels.find(m => m.id === d.model_id) || {};
+        const verdictClass = d.verdict ? d.verdict.toLowerCase() : 'unknown';
+        const score = d.threat_score || 0;
+        const scoreClass = score >= 70 ? 'high' : (score >= 40 ? 'medium' : 'low');
+
+        let detailHtml = '';
+        if (d.type === 'classification' && d.probabilities) {
+            const entries = Object.entries(d.probabilities).sort((a,b)=>b[1]-a[1]);
+            const top = entries[0]?.[0];
+            detailHtml = '<div class="prob-rows">' + entries.map(([lbl,prob]) => {
+                const pct = (prob*100).toFixed(1);
+                return `<div class="prob-row">
+                    <span class="prob-label" style="flex:0 0 180px" title="${lbl}">${lbl}</span>
+                    <div class="prob-track" style="height:8px"><div class="prob-fill ${lbl===top?'top':'rest'}" style="width:${pct}%;height:8px"></div></div>
+                    <span class="prob-pct">${pct}%</span>
+                </div>`;
+            }).join('') + '</div>';
+        } else if (d.type === 'generative' && d.prediction) {
+            detailHtml = `<div class="llm-response" style="max-height:300px">${escHtml(d.prediction)}</div>`;
+        }
+
+        resultBox.innerHTML = `
+            <div class="sandbox-result">
+                <div class="sandbox-header">
+                    <span class="title">${model.icon || '🤖'} ${model.name || d.model_id}</span>
+                    <div style="display:flex;align-items:center;gap:.75rem">
+                        <span class="verdict-pill ${verdictClass}" style="font-size:.95rem">
+                            ${verdictClass === 'block' ? '🚨' : (verdictClass === 'accept' ? '✅' : '❓')} ${d.verdict || 'N/A'}
+                        </span>
+                        <span style="font-size:.78rem;color:var(--text-3)">⏱ ${elapsed}s</span>
+                    </div>
+                </div>
+                <div class="threat-bar-wrap" style="margin-bottom:1rem">
+                    <div class="threat-bar-labels">
+                        <span>Score de risque</span>
+                        <span style="font-size:1rem;font-weight:700;color:${score>=70?'var(--block)':'var(--accept)'}">${score}%</span>
+                    </div>
+                    <div class="threat-bar-track" style="height:12px">
+                        <div class="threat-bar-fill ${scoreClass}" style="width:${score}%;height:12px"></div>
+                    </div>
+                </div>
+                ${detailHtml}
+            </div>`;
+        refreshGPU();
+    } catch(e) {
+        resultBox.innerHTML = `<div class="sandbox-result"><div class="rc-error">Erreur réseau: ${escHtml(e.message)}</div></div>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Analyser';
+    }
+}
+
+// ── BATCH RUNNER ───────────────────────────────────────────
+async function runBatch() {
+    if (!currentModel || !selectedScript) return;
+    const btn = document.getElementById('btn-run-batch');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> En cours…';
+
+    const log = document.getElementById('exec-log');
+    log.innerHTML = `<div class="log-entry"><span class="log-tag info">[INFO]</span><span class="log-msg">Lancement sur ${currentModel} — script : ${selectedScript}</span></div>`;
+    ['b-total','b-pass','b-fail'].forEach(id => document.getElementById(id).textContent='0');
+    document.getElementById('b-acc').textContent='—';
+
+    try {
+        const r = await fetch('/api/run-tests', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({model:currentModel, script:selectedScript}),
+        });
+        const d = await r.json();
+        log.innerHTML = '';
+
+        if (d.report && d.report.test_results) {
+            const rpt = d.report;
+            document.getElementById('b-total').textContent = rpt.total_tests;
+            document.getElementById('b-pass').textContent = rpt.passed;
+            document.getElementById('b-fail').textContent = rpt.failed;
+            document.getElementById('b-acc').textContent = (rpt.accuracy*100).toFixed(0)+'%';
+            rpt.test_results.forEach(t => {
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                const sc = t.status.toLowerCase();
+                let detail = '';
+                if (t.prediction?.predicted_label) detail = ` | ${t.prediction.predicted_label} (${(t.prediction.confidence*100).toFixed(1)}%)`;
+                else if (t.prediction?.generated_text) detail = ` | ${t.prediction.generated_text.substring(0,50)}…`;
+                entry.innerHTML = `<span class="log-tag ${sc}">[${t.status}]</span><span class="log-msg">${escHtml(t.id)} — ${escHtml(t.title)}${detail}</span>`;
+                log.appendChild(entry);
+            });
+        } else {
+            log.innerHTML = `<div class="log-entry"><span class="log-tag err">[ERR]</span><span class="log-msg">Rapport non généré. ${escHtml(d.stderr||d.stdout||'')}</span></div>`;
+        }
+    } catch(e) {
+        log.innerHTML = `<div class="log-entry"><span class="log-tag err">[CRASH]</span><span class="log-msg">${escHtml(e.message)}</span></div>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '▶ Lancer les tests';
+    }
+}
+
+// ── Utils ──────────────────────────────────────────────────
+function escHtml(t) {
+    if (!t) return '';
+    return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+</script>
+</body>
+</html>

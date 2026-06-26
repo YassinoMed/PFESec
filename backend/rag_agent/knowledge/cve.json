@@ -1,0 +1,12 @@
+[
+  {"text": "CVE-2021-44228 - Log4Shell: Remote code execution in Apache Log4j via JNDI lookup. CVSS 10.0 Critical.", "cvss": 10.0, "year": 2021},
+  {"text": "CVE-2023-46604 - Apache ActiveMQ RCE: Remote code execution via serialized class transport. CVSS 10.0 Critical.", "cvss": 10.0, "year": 2023},
+  {"text": "CVE-2022-22965 - Spring4Shell: Remote code execution in Spring Framework via data binding. CVSS 9.8 Critical.", "cvss": 9.8, "year": 2022},
+  {"text": "CVE-2023-34362 - MOVEit Transfer SQLi: SQL injection in MOVEit Transfer leading to RCE. CVSS 9.8 Critical.", "cvss": 9.8, "year": 2023},
+  {"text": "CVE-2021-34527 - PrintNightmare: Remote code execution in Windows Print Spooler. CVSS 8.8 High.", "cvss": 8.8, "year": 2021},
+  {"text": "CVE-2022-30190 - Follina: Remote code execution in Microsoft MSDT. CVSS 7.8 High.", "cvss": 7.8, "year": 2022},
+  {"text": "CVE-2021-26855 - ProxyLogon: SSRF in Microsoft Exchange Server leading to RCE. CVSS 9.8 Critical.", "cvss": 9.8, "year": 2021},
+  {"text": "CVE-2023-2868 - Barracuda ESG RCE: Remote code execution in Barracuda Email Security Gateway. CVSS 9.8 Critical.", "cvss": 9.8, "year": 2023},
+  {"text": "CVE-2024-3094 - XZ Utils Backdoor: Backdoor in XZ Utils compression library, C2-enabled SSH compromise. CVSS 10.0 Critical.", "cvss": 10.0, "year": 2024},
+  {"text": "CVE-2023-44487 - HTTP/2 Rapid Reset Attack: DDoS vulnerability in HTTP/2 protocol. CVSS 7.5 High.", "cvss": 7.5, "year": 2023}
+]

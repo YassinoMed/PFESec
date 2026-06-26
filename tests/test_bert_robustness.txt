@@ -1,0 +1,154 @@
+################################################################################
+#  SCRIPTS DE TEST — CLASSIFICATION BERT (CySecBERT + SecBERT)
+#  Tests de robustesse et edge cases pour les classifiers phishing
+#  Date : 2026-06-04
+################################################################################
+
+# ============================================================
+# CATÉGORIE 1 — TESTS DE ROBUSTESSE
+# ============================================================
+
+[TEST-ROB-001] Email avec obfuscation de texte
+---
+TEXT: Y0ur acc0unt has b33n c0mpr0mised! Cl1ck h3re t0 v3rify: http://g00gle-security.xyz/verify
+---
+LABEL_ATTENDU: Phishing Email
+TYPE: Leetspeak obfuscation — test de robustesse
+
+[TEST-ROB-002] Email très court
+---
+TEXT: Click here now: http://bit.ly/3xY9Z2
+---
+LABEL_ATTENDU: Phishing Email
+TYPE: Ultra-court — test longueur minimale
+
+[TEST-ROB-003] Email très long légitime
+---
+TEXT: Dear Team, I hope this email finds you well. Following our quarterly security review meeting held on May 28, 2026, I wanted to share the comprehensive findings from our penetration testing engagement conducted by CrowdStrike. The assessment covered our entire external perimeter including 47 public-facing applications, 12 API endpoints, and our VPN infrastructure. Key findings include: 1) Two medium-severity cross-site scripting vulnerabilities in the customer portal (already patched as of June 1), 2) One low-severity information disclosure via verbose error messages in the staging environment, 3) Certificate pinning bypass on the mobile application (Android only), 4) Outdated TLS 1.0 support on legacy load balancer LB-LEGACY-02. All critical and high-severity findings from the previous quarter have been remediated and verified. The full 87-page report is available on our SharePoint security folder. Next steps: We will schedule individual remediation meetings with each application owner by end of week. Please review the findings relevant to your systems before then. If you have any questions, please reach out to the security team at security@company.com or via our Slack channel #security-ops. Best regards, Michael Chen, Director of Information Security.
+---
+LABEL_ATTENDU: Safe Email
+TYPE: Email long légitime — test de contexte
+
+[TEST-ROB-004] Mélange français-anglais
+---
+TEXT: Bonjour, Your compte a été compromis. Veuillez cliquer sur ce link pour restore your access : http://secure-banque.fr.phishing.xyz/login. Merci de faire vite car votre account sera suspended dans 24 heures.
+---
+LABEL_ATTENDU: Phishing Email
+TYPE: Code-switching FR/EN — test multilingue
+
+[TEST-ROB-005] Email technique légitime avec URLs
+---
+TEXT: Hi, I've pushed the security patches to the staging environment. Please review the changes at https://github.com/company/security-patches/pull/847. The CI/CD pipeline is green and all security tests pass. Key changes: updated OpenSSL to 3.2.1, patched CVE-2026-1234 in libcurl, and hardened the Nginx config per our hardening guide. Let me know if you see any issues.
+---
+LABEL_ATTENDU: Safe Email
+TYPE: Email développeur avec URLs légitimes
+
+# ============================================================
+# CATÉGORIE 2 — TESTS ADVERSARIAUX
+# ============================================================
+
+[TEST-ADV-001] Injection de contexte légitime dans phishing
+---
+TEXT: Security Bulletin - Microsoft Security Response Center
+Following our regular Patch Tuesday cycle, we are issuing an emergency out-of-band security update. A critical zero-day vulnerability (CVE-2026-99999) affects all versions of Windows. 
+Download the emergency patch immediately: http://microsoft-emergency-patch.com/download
+This update addresses a remote code execution vulnerability being actively exploited in the wild.
+Microsoft Corporation, One Microsoft Way, Redmond, WA 98052
+---
+LABEL_ATTENDU: Phishing Email
+TYPE: Phishing camouflé en bulletin sécurité Microsoft — adversarial
+
+[TEST-ADV-002] Email légitime avec mots-clés phishing
+---
+TEXT: Dear Security Team, During our analysis of the latest phishing campaign targeting our employees, we identified the following characteristics: the attackers are using urgent language like "your account will be suspended", asking users to "click here to verify", and spoofing our domain with "company-secure.com". We've updated our email filters and blocked 847 phishing emails. Please remind your teams to report suspicious emails to phishing@company.com. Attached is the full IOC list for your review.
+---
+LABEL_ATTENDU: Safe Email
+TYPE: Email légitime parlant DE phishing — adversarial (false positive trap)
+
+[TEST-ADV-003] Phishing avec disclaimer légal
+---
+TEXT: IMPORTANT NOTICE: This email and any attachments are confidential and intended solely for the recipient. If you received this in error, please delete it.
+
+Dear Customer,
+We detected suspicious login activity on your account from IP 185.220.101.45 (Moscow, Russia). 
+For your security, we have temporarily locked your account.
+Restore access now: https://secure-login.bank-verify.xyz/restore
+This action is required within 24 hours to avoid permanent suspension.
+
+This communication is from the Fraud Prevention Department. Do not reply to this email.
+Bank Security Operations | Reg. No. 12345678
+---
+LABEL_ATTENDU: Phishing Email
+TYPE: Phishing avec éléments de légitimité (disclaimer, reg. number) — adversarial
+
+[TEST-ADV-004] Email neutre - ni phishing ni vraiment safe
+---
+TEXT: Hello, just checking in about the project status. Can you send me the updated spreadsheet when you get a chance? Thanks.
+---
+LABEL_ATTENDU: Safe Email
+TYPE: Email anodin neutre — test de calibration
+
+[TEST-ADV-005] Spear phishing ultra-ciblé
+---
+TEXT: Hi Sarah, Great catching up with you at the RSA Conference last week! As promised, here's the threat intelligence report we discussed about the APT29 campaign targeting the financial sector. I've uploaded it to our shared folder: https://sharepoint-company.onedrive-secure.xyz/shared/APT29_TI_Report.pdf. Let me know your thoughts on the attribution analysis in section 3. Best, Dave (CrowdStrike)
+---
+LABEL_ATTENDU: Phishing Email
+TYPE: Spear phishing personnalisé avec contexte réel — très difficile à détecter
+
+# ============================================================
+# CATÉGORIE 3 — TESTS DE PERFORMANCE / BATCH
+# ============================================================
+
+[TEST-BATCH-001]
+TEXT: Your password expires in 3 days. Reset at https://sso.company.com/reset
+LABEL_ATTENDU: Safe Email
+
+[TEST-BATCH-002]
+TEXT: Congratulations! You've won a $1000 Amazon gift card. Claim now: http://claim-prize.xyz
+LABEL_ATTENDU: Phishing Email
+
+[TEST-BATCH-003]
+TEXT: Meeting reminder: Security standup tomorrow at 10am. Zoom link: https://zoom.us/j/123456789
+LABEL_ATTENDU: Safe Email
+
+[TEST-BATCH-004]
+TEXT: URGENT: Your Netflix subscription payment failed. Update billing: http://netflix-billing.secure-pay.xyz
+LABEL_ATTENDU: Phishing Email
+
+[TEST-BATCH-005]
+TEXT: The vulnerability scan completed. 3 critical findings. Report attached. Please review by EOD.
+LABEL_ATTENDU: Safe Email
+
+[TEST-BATCH-006]
+TEXT: Verify your identity to receive your tax refund of $3,247.00: http://irs-refund.gov-verify.xyz
+LABEL_ATTENDU: Phishing Email
+
+[TEST-BATCH-007]
+TEXT: Reminder: Complete your annual cybersecurity awareness training by June 30. Access at https://training.company.com
+LABEL_ATTENDU: Safe Email
+
+[TEST-BATCH-008]
+TEXT: Your Google account has been compromised. Secure it now: http://google-account-security.xyz/verify
+LABEL_ATTENDU: Phishing Email
+
+[TEST-BATCH-009]
+TEXT: Hi, please review the attached incident report for IR-2026-0847. The containment phase is complete.
+LABEL_ATTENDU: Safe Email
+
+[TEST-BATCH-010]
+TEXT: Final notice: Your domain company.com expires tomorrow. Renew immediately: http://domain-renew.registrar-secure.xyz
+LABEL_ATTENDU: Phishing Email
+
+################################################################################
+#  COMMANDES DE TEST
+################################################################################
+
+# --- Test unitaire CySecBERT ---
+# python train_adaptive_pipeline.py predict --model outputs/cysecbert-phishing --prompt "TEXT_ICI"
+
+# --- Test unitaire SecBERT ---
+# python train_adaptive_pipeline.py predict --model outputs/secbert-phishing --prompt "TEXT_ICI"
+
+# --- Test batch automatisé ---
+# python test_runner.py --test-file tests/test_bert_robustness.txt --model cysecbert --report
+# python test_runner.py --test-file tests/test_bert_robustness.txt --model secbert --report

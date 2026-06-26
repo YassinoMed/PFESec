@@ -1,0 +1,258 @@
+################################################################################
+#  SCRIPTS DE TEST — DÉTECTION PHISHING (Emails)
+#  Modèles ciblés : CySecBERT, SecBERT, Llama-Phishsense-1B
+#  Date : 2026-06-04
+################################################################################
+
+# ============================================================
+# CATÉGORIE 1 — PHISHING CLASSIQUE (Attendu : Phishing Email)
+# ============================================================
+
+[TEST-PHISH-001] Urgence compte bancaire
+---
+Subject: URGENT: Your account will be suspended
+Dear Customer,
+We have detected unusual activity on your account. Your online banking access will be permanently suspended unless you verify your identity within 24 hours.
+Click here to verify: http://secure-bank-login.com.fake-domain.xyz/verify
+If you fail to respond, your account will be closed.
+Sincerely, Security Department
+---
+LABEL_ATTENDU: Phishing Email
+TYPE: Urgence + lien suspect + menace de suspension
+
+[TEST-PHISH-002] Faux email Microsoft 365
+---
+Subject: Action Required: Unusual Sign-in Activity
+Your Microsoft 365 account was accessed from an unknown device in Moscow, Russia.
+If this wasn't you, secure your account immediately:
+https://login.microsoftonline.com.evil-phish.net/secure
+Time: 2026-06-03 14:22 UTC
+Device: Linux Chrome 120.0
+---
+LABEL_ATTENDU: Phishing Email
+TYPE: Usurpation Microsoft + géolocalisation fausse
+
+[TEST-PHISH-003] Phishing PayPal
+---
+Subject: Your PayPal account has been limited
+Dear valued customer,
+We've noticed some changes to your account that require verification. Until you confirm your information, certain features will be limited.
+Please log in to restore full access: http://paypal-secure-verify.com/confirm
+Reference: PP-29481726
+---
+LABEL_ATTENDU: Phishing Email
+TYPE: Usurpation PayPal + restriction compte
+
+[TEST-PHISH-004] Arnaque remboursement fiscal
+---
+Subject: Vous avez droit à un remboursement de 847.50 EUR
+Madame, Monsieur,
+Après recalcul de votre situation fiscale pour l'année 2025, vous bénéficiez d'un remboursement de 847,50 EUR. Pour recevoir votre remboursement, veuillez confirmer vos coordonnées bancaires :
+https://impots-gouv-fr.remboursement-secure.com/formulaire
+Cordialement,
+Direction Générale des Finances Publiques
+---
+LABEL_ATTENDU: Phishing Email
+TYPE: Usurpation impôts FR + remboursement appât
+
+[TEST-PHISH-005] Phishing DHL livraison
+---
+Subject: DHL Express: Package delivery failed - Action Required
+Dear Recipient,
+Your package #DHL-392847261 could not be delivered due to an incomplete address.
+Please update your delivery information and pay the redelivery fee of $2.99:
+http://dhl-redelivery.track-package.xyz/update
+Package will be returned to sender after 48 hours.
+---
+LABEL_ATTENDU: Phishing Email
+TYPE: Usurpation DHL + frais livraison
+
+[TEST-PHISH-006] Phishing RH entreprise
+---
+Subject: Important: Annual Benefits Enrollment - Deadline Tomorrow
+Hi Team,
+This is a reminder that open enrollment for 2026 benefits closes tomorrow.
+If you haven't already, please review and confirm your selections:
+https://hr-benefits-portal.company-secure.net/enroll
+Failure to enroll will result in loss of coverage.
+Best,
+Human Resources
+---
+LABEL_ATTENDU: Phishing Email
+TYPE: Spear phishing RH + deadline urgente
+
+[TEST-PHISH-007] Business Email Compromise (BEC)
+---
+Subject: Re: Wire Transfer Needed - Confidential
+Hi,
+I'm in a meeting and can't talk right now. I need you to process an urgent wire transfer to a new vendor. Details below:
+Bank: First National Bank
+Account: 48291037462
+Amount: $45,000
+Routing: 021000021
+Please process this ASAP and confirm when done. Don't discuss with anyone else — it's confidential.
+Thanks,
+[CEO Name]
+---
+LABEL_ATTENDU: Phishing Email
+TYPE: BEC / fraude au président
+
+[TEST-PHISH-008] Phishing crypto wallet
+---
+Subject: Security Alert: Your wallet has been compromised
+Your MetaMask wallet connected to address 0x7a3d...f82b has been flagged for unauthorized transactions.
+To prevent loss of funds, please verify your seed phrase immediately:
+https://metamask-security-verify.io/wallet/restore
+WARNING: Failure to act within 1 hour may result in permanent loss of assets.
+---
+LABEL_ATTENDU: Phishing Email
+TYPE: Crypto scam + seed phrase vol
+
+[TEST-PHISH-009] Faux support technique Apple
+---
+Subject: Your Apple ID has been locked for security reasons
+Dear Apple Customer,
+For your protection, your Apple ID has been temporarily locked due to too many failed login attempts.
+To unlock your account and reset your password:
+https://appleid.apple.com.unlock-id-secure.xyz/reset
+If you did not attempt to log in, someone may be trying to access your account.
+---
+LABEL_ATTENDU: Phishing Email
+TYPE: Usurpation Apple + compte bloqué
+
+[TEST-PHISH-010] Phishing LinkedIn
+---
+Subject: Someone viewed your profile 47 times this week
+Hi,
+You appeared in 47 searches this week! Top companies viewing your profile include Google, Amazon, and Meta.
+See who's been looking at your profile:
+https://linkedin-premium.profile-views.xyz/dashboard
+Upgrade to Premium for full insights.
+LinkedIn Notifications
+---
+LABEL_ATTENDU: Phishing Email
+TYPE: Social engineering LinkedIn + curiosité
+
+# ============================================================
+# CATÉGORIE 2 — EMAILS LÉGITIMES (Attendu : Safe Email)
+# ============================================================
+
+[TEST-SAFE-001] Newsletter tech légitime
+---
+Subject: This Week in Cybersecurity - Issue #247
+Hi there,
+Here's your weekly roundup of cybersecurity news:
+- Microsoft patches critical zero-day in Windows Kernel (CVE-2026-12345)
+- New NIST guidelines for post-quantum cryptography released
+- Ransomware group LockBit 4.0 targets healthcare sector
+Read more on our blog: https://cybersecnews.com/weekly-247
+Unsubscribe: https://cybersecnews.com/unsubscribe
+---
+LABEL_ATTENDU: Safe Email
+TYPE: Newsletter légitime
+
+[TEST-SAFE-002] Notification GitHub réelle
+---
+Subject: [GitHub] Security alert: new vulnerabilities detected
+We found 3 potential security vulnerabilities in your repository dependencies:
+- lodash@4.17.20: Prototype Pollution (CVE-2021-23337) - High
+- axios@0.21.0: Server-Side Request Forgery (CVE-2021-3749) - Medium
+- express@4.17.1: Open Redirect (CVE-2022-24999) - Low
+Review these alerts: https://github.com/user/repo/security/dependabot
+GitHub Security Team
+---
+LABEL_ATTENDU: Safe Email
+TYPE: Alerte sécurité GitHub légitime
+
+[TEST-SAFE-003] Email professionnel interne
+---
+Subject: Re: Q2 Security Audit Results
+Hi team,
+Attached are the results from our Q2 security audit. Key findings:
+- 2 critical vulnerabilities patched (JIRA: SEC-1234, SEC-1256)
+- Penetration test coverage improved to 87%
+- SOC2 compliance maintained
+Please review before Friday's meeting.
+Best regards,
+Sarah - Security Team Lead
+---
+LABEL_ATTENDU: Safe Email
+TYPE: Email professionnel légitime
+
+[TEST-SAFE-004] Confirmation achat Amazon réelle
+---
+Subject: Your Amazon.com order #112-4938271-9284736
+Hello,
+Thank you for your order! Your estimated delivery date is June 8, 2026.
+Order Details:
+- Logitech MX Master 3S Mouse - $89.99
+- USB-C Hub Adapter - $29.99
+Shipping to: 123 Main St, Anytown, US 12345
+Track your package: https://www.amazon.com/gp/your-account/order-details?orderID=112-4938271-9284736
+---
+LABEL_ATTENDU: Safe Email
+TYPE: Confirmation commande légitime
+
+[TEST-SAFE-005] Email administratif français
+---
+Subject: Convocation à la réunion du CSE du 15 juin 2026
+Madame, Monsieur,
+Vous êtes convoqué(e) à la réunion ordinaire du Comité Social et Économique qui se tiendra le 15 juin 2026 à 14h00, salle de conférence B.
+Ordre du jour :
+1. Approbation du PV de la réunion précédente
+2. Bilan sécurité informatique du trimestre
+3. Questions diverses
+Cordialement,
+Le Secrétaire du CSE
+---
+LABEL_ATTENDU: Safe Email
+TYPE: Communication administrative FR légitime
+
+# ============================================================
+# CATÉGORIE 3 — CAS AMBIGUS / EDGE CASES
+# ============================================================
+
+[TEST-EDGE-001] Email sécurité légitime mais alarmiste
+---
+Subject: CRITICAL: Immediate password reset required
+Dear Employee,
+Our Security Operations Center has detected a credential stuffing attack targeting our organization. As a precautionary measure, ALL employee passwords must be reset within the next 4 hours.
+Please use our official SSO portal: https://sso.company.com/reset-password
+Contact the IT help desk at ext. 4567 if you need assistance.
+CISO Office
+---
+LABEL_ATTENDU: Safe Email (contexte entreprise légitime)
+TYPE: Email sécurité réel avec ton urgent — peut tromper les modèles
+
+[TEST-EDGE-002] Phishing sophistiqué avec domaine proche
+---
+Subject: Invoice #INV-2026-0847 - Payment Due
+Dear Accounting Team,
+Please find attached the invoice for consulting services rendered in May 2026.
+Amount Due: $12,450.00
+Due Date: June 15, 2026
+Payment Portal: https://quickbooks-invoicing.com/pay/INV-2026-0847
+Best regards,
+John Miller
+Miller & Associates Consulting
+---
+LABEL_ATTENDU: Phishing Email
+TYPE: Phishing financier sophistiqué — domaine crédible
+
+################################################################################
+#  COMMANDES DE TEST
+################################################################################
+
+# --- Test BERT Classifier (CySecBERT) ---
+# python train_adaptive_pipeline.py predict --model outputs/cysecbert-phishing --prompt "CONTENU_EMAIL_ICI"
+
+# --- Test BERT Classifier (SecBERT) ---  
+# python train_adaptive_pipeline.py predict --model outputs/secbert-phishing --prompt "CONTENU_EMAIL_ICI"
+
+# --- Test LLM (Phishsense) ---
+# python train_adaptive_pipeline.py predict --model outputs/phishsense-merged --prompt "Analyse cet email pour phishing : CONTENU_EMAIL_ICI"
+
+# --- Test batch avec ce fichier ---
+# python test_runner.py --test-file tests/test_phishing_emails.txt --model cysecbert
+# python test_runner.py --test-file tests/test_phishing_emails.txt --model secbert
+# python test_runner.py --test-file tests/test_phishing_emails.txt --model phishsense
