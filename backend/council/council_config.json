@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "max_debate_rounds": 2,
+  "min_confidence_for_no_debate": 80.0,
+  "disagreement_threshold": 0.35,
+  "expert_timeout_s": 30.0,
+  "cross_validation_enabled": true,
+  "reflection_enabled": true,
+  "fact_check_enabled": true,
+  "max_selected_experts": 6,
+  "log_dir": "logs/council"
+}

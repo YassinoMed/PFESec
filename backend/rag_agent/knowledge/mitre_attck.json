@@ -1,0 +1,12 @@
+[
+  {"text": "MITRE ATT&CK T1566 - Phishing: Adversaries may send phishing messages to gain access to victim systems.", "tactic": "Initial Access", "technique_id": "T1566"},
+  {"text": "MITRE ATT&CK T1059 - Command and Scripting Interpreter: Adversaries may abuse command and script interpreters to execute commands.", "tactic": "Execution", "technique_id": "T1059"},
+  {"text": "MITRE ATT&CK T1071 - Application Layer Protocol: Adversaries may communicate using application layer protocols to avoid detection.", "tactic": "Command and Control", "technique_id": "T1071"},
+  {"text": "MITRE ATT&CK T1486 - Data Encrypted for Impact: Adversaries may encrypt data on target systems to disrupt availability.", "tactic": "Impact", "technique_id": "T1486"},
+  {"text": "MITRE ATT&CK T1003 - OS Credential Dumping: Adversaries may attempt to dump credentials from system memory.", "tactic": "Credential Access", "technique_id": "T1003"},
+  {"text": "MITRE ATT&CK T1547 - Boot or Logon Autostart Execution: Adversaries may configure system settings to automatically execute programs.", "tactic": "Persistence", "technique_id": "T1547"},
+  {"text": "MITRE ATT&CK T1562 - Impair Defenses: Adversaries may disable security tools to avoid detection.", "tactic": "Defense Evasion", "technique_id": "T1562"},
+  {"text": "MITRE ATT&CK T1078 - Valid Accounts: Adversaries may obtain and abuse credentials of existing accounts.", "tactic": "Defense Evasion", "technique_id": "T1078"},
+  {"text": "MITRE ATT&CK T1190 - Exploit Public-Facing Application: Adversaries may exploit weaknesses in public-facing systems.", "tactic": "Initial Access", "technique_id": "T1190"},
+  {"text": "MITRE ATT&CK T1485 - Data Destruction: Adversaries may destroy data on target systems.", "tactic": "Impact", "technique_id": "T1485"}
+]

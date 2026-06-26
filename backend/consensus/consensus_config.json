@@ -1,0 +1,11 @@
+{
+  "high_confidence_threshold": 90.0,
+  "medium_confidence_threshold": 80.0,
+  "weight_high": 4,
+  "weight_medium": 2,
+  "weight_low": 1,
+  "min_models_for_strong_consensus": 2,
+  "consensus_overlap_ratio": 0.6,
+  "model_timeout_s": 30.0,
+  "log_dir": "logs/consensus"
+}

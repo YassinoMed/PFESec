@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+venv/
+.venv/
+env/
+
+# Model weights (too large for git)
+models/
+outputs/
+outputs_5000/
+
+# Large data files
+datasets/
+holdout/
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+ai-soc-web/node_modules/
+ai-soc-web/.next/

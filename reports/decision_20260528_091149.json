@@ -1,0 +1,92 @@
+{
+  "timestamp": "2026-05-28T09:11:49.865155",
+  "min_delta_required": 0.03,
+  "baseline_report": "C:\\Users\\User\\Desktop\\Nouveau dossier\\mon-workspace-hf\\security\\reports\\baseline_20260523_172602.json",
+  "finetuned_report": "C:\\Users\\User\\Desktop\\Nouveau dossier\\mon-workspace-hf\\security\\reports\\finetuned_20260528_091126.json",
+  "recommendations": {
+    "cysecbert": {
+      "baseline": {
+        "phishing_email_dataset": {
+          "accuracy": 0.39,
+          "precision": 0.6423076923076922,
+          "recall": 0.39,
+          "f1": 0.24401709401709404,
+          "n_samples": 200,
+          "n_labels": 2,
+          "label2id": {
+            "Phishing Email": 0,
+            "Safe Email": 1
+          },
+          "warning": "Tête de classification absente du checkpoint (modèle pré-entraîné en MaskedLM). Le score baseline est du bruit aléatoire et NE doit PAS servir de référence.",
+          "baseline_meaningful": false
+        }
+      },
+      "decision": "KEEP_FINETUNED_BASELINE_INVALID",
+      "finetuned": {
+        "phishing_email_dataset": {
+          "accuracy": 0.99,
+          "precision": 0.99,
+          "recall": 0.99,
+          "f1": 0.99,
+          "n_samples": 200,
+          "n_labels": 2,
+          "label2id": {
+            "Phishing Email": 0,
+            "Safe Email": 1
+          },
+          "baseline_meaningful": true
+        }
+      },
+      "note": "Baseline = bruit aléatoire (modèle pré-entraîné sans tête classif). Fine-tuning obligatoire."
+    },
+    "secbert": {
+      "baseline": {
+        "phishing_email_dataset": {
+          "accuracy": 0.625,
+          "precision": 0.390625,
+          "recall": 0.625,
+          "f1": 0.4807692307692308,
+          "n_samples": 200,
+          "n_labels": 2,
+          "label2id": {
+            "Phishing Email": 0,
+            "Safe Email": 1
+          },
+          "warning": "Tête de classification absente du checkpoint (modèle pré-entraîné en MaskedLM). Le score baseline est du bruit aléatoire et NE doit PAS servir de référence.",
+          "baseline_meaningful": false
+        }
+      },
+      "decision": "KEEP_FINETUNED_BASELINE_INVALID",
+      "finetuned": {
+        "phishing_email_dataset": {
+          "accuracy": 0.965,
+          "precision": 0.9649560274560275,
+          "recall": 0.965,
+          "f1": 0.9649522714511083,
+          "n_samples": 200,
+          "n_labels": 2,
+          "label2id": {
+            "Phishing Email": 0,
+            "Safe Email": 1
+          },
+          "baseline_meaningful": true
+        }
+      },
+      "note": "Baseline = bruit aléatoire (modèle pré-entraîné sans tête classif). Fine-tuning obligatoire."
+    },
+    "securityllm": {
+      "baseline": {
+        "note": "Évaluation générative non automatisée — voir 'test' pour inférence manuelle.",
+        "available": true
+      },
+      "decision": "NO_FINETUNED_AVAILABLE"
+    },
+    "phishsense": {
+      "baseline": {
+        "note": "Évaluation générative non automatisée — voir 'test' pour inférence manuelle.",
+        "available": true
+      },
+      "decision": "NO_FINETUNED_AVAILABLE"
+    }
+  }
+}

