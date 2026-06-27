@@ -110,14 +110,7 @@ export default function AnalyzePage() {
             </div>
           </Card>
 
-          {/* Résultats par modèle */}
-          {data && (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {data.results.map((r, i) => (
-                <ResultCard key={i} result={r} index={i} />
-              ))}
-            </div>
-          )}
+          {/* Résultats par modèle masqués */}
         </div>
 
         {/* Panneau consensus */}
@@ -209,40 +202,10 @@ function ConsensusPanel({
         <StatCard label="Confiance" value={`${confidence.toFixed(0)}%`} tone="primary" />
       </div>
 
-      {/* Radar des scores */}
-      <Card>
-        <CardHeader
-          title="Radar des menaces"
-          subtitle="Score par modèle (0–100)"
-          icon={<Radar size={18} />}
-        />
-        <ResponsiveContainer width="100%" height={260}>
-          <RadarChart data={radarData}>
-            <PolarGrid stroke="rgba(255,255,255,0.08)" />
-            <PolarAngleAxis
-              dataKey="model"
-              tick={{ fill: "#94a3b8", fontSize: 10 }}
-            />
-            <PolarRadiusAxis
-              angle={90}
-              domain={[0, 100]}
-              tick={{ fill: "#475569", fontSize: 9 }}
-              stroke="rgba(255,255,255,0.05)"
-            />
-            <RechartsRadar
-              name="Menace"
-              dataKey="score"
-              stroke="hsl(0, 82%, 58%)"
-              fill="hsl(0, 82%, 58%)"
-              fillOpacity={0.3}
-              strokeWidth={2}
-            />
-          </RadarChart>
-        </ResponsiveContainer>
-        <p className="mt-2 text-center text-[10px] text-tertiary">
-          {totalVotes} votes · {results.length} modèles consultés
-        </p>
-      </Card>
+      {/* Radar des scores masqué */}
+      <p className="mt-4 text-center text-[11px] text-tertiary">
+        Scoring calculé sur l'ensemble de la flotte de modèles IA de sécurité de manière consolidée.
+      </p>
     </>
   );
 }

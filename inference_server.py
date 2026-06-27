@@ -139,7 +139,7 @@ def _load_bert(model_id: str, cfg: Dict) -> Dict:
     model = AutoModelForSequenceClassification.from_pretrained(
         str(path),
         local_files_only=True,
-        torch_dtype=_detect_dtype() if torch.cuda.is_available() else torch.float32,
+        torch_dtype=torch.float32,
     ).to(device).eval()
     label_map = None
     try:
@@ -161,7 +161,13 @@ def _load_lora(model_id: str, cfg: Dict) -> Dict:
     print(f"  [LOAD] {model_id} — LLM+LoRA base={base_path.name}, adapter={adapter_path.name}")
     dtype = _detect_dtype()
     device_map = "auto" if torch.cuda.is_available() else None
-    tokenizer = AutoTokenizer.from_pretrained(str(base_path), local_files_only=True, trust_remote_code=True)
+    
+    # Gestion sécurisée du tokenizer Mistral avec fix_mistral_regex=True
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(str(base_path), local_files_only=True, trust_remote_code=True, fix_mistral_regex=True)
+    except TypeError:
+        tokenizer = AutoTokenizer.from_pretrained(str(base_path), local_files_only=True, trust_remote_code=True)
+        
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     base_model = AutoModelForCausalLM.from_pretrained(
@@ -181,7 +187,13 @@ def _load_llm(model_id: str, cfg: Dict) -> Dict:
     print(f"  [LOAD] {model_id} — LLM merged depuis {path}")
     dtype = _detect_dtype()
     device_map = "auto" if torch.cuda.is_available() else None
-    tokenizer = AutoTokenizer.from_pretrained(str(path), local_files_only=True, trust_remote_code=True)
+    
+    # Gestion sécurisée du tokenizer Mistral avec fix_mistral_regex=True
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(str(path), local_files_only=True, trust_remote_code=True, fix_mistral_regex=True)
+    except TypeError:
+        tokenizer = AutoTokenizer.from_pretrained(str(path), local_files_only=True, trust_remote_code=True)
+        
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     model = AutoModelForCausalLM.from_pretrained(
@@ -306,7 +318,7 @@ def _infer_bert(loaded: Dict, text: str, cfg: Dict) -> Dict:
     }
 
 
-def _infer_llm(loaded: Dict, text: str, cfg: Dict, max_new_tokens: int = 200) -> Dict:
+def _infer_llm(loaded: Dict, text: str, cfg: Dict, max_new_tokens: int = 64) -> Dict:
     model = loaded["model"]
     tokenizer = loaded["tokenizer"]
     task = cfg.get("task", "phishing")
@@ -325,8 +337,8 @@ def _infer_llm(loaded: Dict, text: str, cfg: Dict, max_new_tokens: int = 200) ->
             **inputs,
             max_new_tokens=max_new_tokens,
             do_sample=False,
-            temperature=1.0,
-            repetition_penalty=1.1,
+            use_cache=True,
+            num_beams=1,
             pad_token_id=tokenizer.eos_token_id,
         )
 
@@ -354,7 +366,7 @@ def _infer_llm(loaded: Dict, text: str, cfg: Dict, max_new_tokens: int = 200) ->
     }
 
 
-def run_inference(model_id: str, text: str, max_new_tokens: int = 200) -> Dict:
+def run_inference(model_id: str, text: str, max_new_tokens: int = 64) -> Dict:
     """Lance l'inférence sur un modèle. Le charge si nécessaire."""
     t0 = time.time()
     cfg = MODEL_REGISTRY.get(model_id)
@@ -388,7 +400,7 @@ def run_inference(model_id: str, text: str, max_new_tokens: int = 200) -> Dict:
         return {"error": str(e), "model_id": model_id, "elapsed_s": round(time.time() - t0, 2)}
 
 
-def run_all_inference(text: str, max_new_tokens: int = 150) -> List[Dict]:
+def run_all_inference(text: str, max_new_tokens: int = 64) -> List[Dict]:
     """Lance l'inférence en parallèle sur tous les modèles READY."""
     ready_ids = [mid for mid in MODEL_REGISTRY if _get_status(mid) == "READY"]
     results = []
@@ -537,7 +549,7 @@ class InferenceHandler(BaseHTTPRequestHandler):
         if path == "/api/predict":
             model_id = body.get("model")
             text = body.get("prompt", "").strip()
-            max_tokens = int(body.get("max_new_tokens", 200))
+            max_tokens = int(body.get("max_new_tokens", 64))
             if not model_id or not text:
                 self._json(400, {"error": "Champs 'model' et 'prompt' requis"})
                 return
@@ -546,7 +558,7 @@ class InferenceHandler(BaseHTTPRequestHandler):
 
         elif path == "/api/predict-all":
             text = body.get("prompt", "").strip()
-            max_tokens = int(body.get("max_new_tokens", 150))
+            max_tokens = int(body.get("max_new_tokens", 64))
             if not text:
                 self._json(400, {"error": "Champ 'prompt' requis"})
                 return

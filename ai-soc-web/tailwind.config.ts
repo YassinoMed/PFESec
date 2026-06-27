@@ -46,6 +46,8 @@ const config: Config = {
         "fade-up": "fadeUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both",
         "slide-in": "slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both",
         spin: "spin 1s linear infinite",
+        "draw-outline": "drawOutline 2s ease forwards",
+        draw: "draw 2s ease forwards",
       },
       keyframes: {
         fadeUp: {
@@ -55,6 +57,14 @@ const config: Config = {
         slideIn: {
           "0%": { opacity: "0", transform: "translateX(-8px)" },
           "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        drawOutline: {
+          from: { strokeDasharray: "160", strokeDashoffset: "160" },
+          to: { strokeDasharray: "160", strokeDashoffset: "0" },
+        },
+        draw: {
+          from: { strokeDasharray: "100", strokeDashoffset: "100" },
+          to: { strokeDasharray: "100", strokeDashoffset: "0" },
         },
       },
       backgroundImage: {

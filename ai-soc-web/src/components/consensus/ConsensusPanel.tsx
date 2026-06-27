@@ -67,6 +67,24 @@ const confBg = (level: string) => {
   }
 };
 
+const anonymize = (text: string): string => {
+  if (!text) return text;
+  return text
+    .replace(/cysecbert/gi, "Expert 1")
+    .replace(/secbert/gi, "Expert 2")
+    .replace(/phishsense-merged/gi, "Expert 3")
+    .replace(/phishsense/gi, "Expert 3")
+    .replace(/securityllm-merged/gi, "Expert 4")
+    .replace(/securityllm/gi, "Expert 4")
+    .replace(/security_rag/gi, "Expert RAG")
+    .replace(/rag/gi, "Expert RAG")
+    .replace(/CySecBERT/g, "Expert 1")
+    .replace(/SecBERT/g, "Expert 2")
+    .replace(/PhishSense 1B/g, "Expert 3")
+    .replace(/SecurityLLM/g, "Expert 4")
+    .replace(/Security RAG/g, "Expert RAG");
+};
+
 export default function ConsensusPanel() {
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<ConsensusResult | null>(null);
@@ -79,7 +97,7 @@ export default function ConsensusPanel() {
     setError("");
     setResult(null);
     try {
-      const url = `${process.env.NEXT_PUBLIC_ORCHESTRATOR_URL || "http://localhost:8080"}/api/v1/security/consensus`;
+      const url = `${process.env.NEXT_PUBLIC_ORCHESTRATOR_URL || ""}/api/v1/security/consensus`;
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -178,7 +196,7 @@ function ConsensusDisplay({ result }: { result: ConsensusResult }) {
 
             {result.warning && (
               <p className="mt-3 flex items-center gap-1.5 rounded-lg bg-warn/10 px-3 py-1.5 text-xs text-warn">
-                <AlertTriangle size={13} /> {result.warning}
+                <AlertTriangle size={13} /> {anonymize(result.warning)}
               </p>
             )}
           </div>
@@ -190,9 +208,6 @@ function ConsensusDisplay({ result }: { result: ConsensusResult }) {
             <MiniStat label="Retenus" value={result.total_retained} icon={<CheckCircle2 size={13} />} color="text-accept" />
             <MiniStat label="Rejetés" value={result.total_rejected} icon={<XCircle size={13} />} color="text-block" />
             <MiniStat label="Temps total" value={`${result.total_execution_ms.toFixed(0)} ms`} icon={<Clock size={13} />} />
-            {result.primary_model && (
-              <MiniStat label="Modèle principal" value={result.primary_model.model_name} icon={<Trophy size={13} />} color="text-warn" />
-            )}
           </div>
         </Card>
       </div>
@@ -200,82 +215,15 @@ function ConsensusDisplay({ result }: { result: ConsensusResult }) {
       <Card>
         <CardHeader
           title="Réponse finale"
-          subtitle={result.primary_model ? `Sélectionnée depuis ${result.primary_model.model_name}` : "Aucune réponse exploitable"}
+          subtitle="Synthèse décisionnelle consolidée"
           icon={<Brain size={18} />}
         />
         <div className="rounded-lg border border-white/5 bg-black/20 p-4">
           <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-6 text-[#f0f4ff]">
-            {formatResponse(result.final_response)}
+            {anonymize(formatResponse(result.final_response))}
           </pre>
         </div>
       </Card>
-
-      {result.retained.length > 0 && (
-        <Card>
-          <CardHeader title="Modèles participants" subtitle={`${result.retained.length} modèles retenus dans le calcul`} icon={<Layers size={18} />} />
-          <div className="flex flex-wrap gap-2">
-            {result.retained.map((v) => (
-              <span key={v.model_id} className="rounded-lg border border-accept/20 bg-accept/10 px-2.5 py-1 text-[11px] text-accept">
-                {v.model_name} · {v.confidence.toFixed(1)}% · ×{v.weight}
-              </span>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {result.ranking.length > 0 && (
-        <Card>
-          <CardHeader title="Classement des modèles" subtitle="Trié par score décroissant" icon={<BarChart3 size={18} />} />
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-white/5 text-tertiary">
-                  <th className="p-2 font-medium">#</th>
-                  <th className="p-2 font-medium">Modèle</th>
-                  <th className="p-2 font-medium">Catégorie</th>
-                  <th className="p-2 font-medium text-right">Score</th>
-                  <th className="p-2 font-medium text-right">Poids</th>
-                  <th className="p-2 font-medium text-right">Score pondéré</th>
-                  <th className="p-2 font-medium text-right">Contribution</th>
-                  <th className="p-2 font-medium text-right">Temps</th>
-                </tr>
-              </thead>
-              <tbody>
-                {result.ranking.map((v, i) => {
-                  const contrib = result.contributions[v.model_id] ?? 0;
-                  return (
-                    <tr key={v.model_id} className={cn("border-b border-white/[0.03] transition-colors hover:bg-white/[0.02]",
-                      i === 0 && "bg-primary/[0.04]"
-                    )}>
-                      <td className="p-2 font-mono text-tertiary">{i + 1}</td>
-                      <td className="p-2 font-medium text-[#f0f4ff]">{v.model_name}</td>
-                      <td className="p-2 text-tertiary">{v.category.replace(/_/g, " ")}</td>
-                      <td className="p-2 text-right font-mono tabular-nums">{v.confidence.toFixed(1)}%</td>
-                      <td className="p-2 text-right font-mono tabular-nums">×{v.weight}</td>
-                      <td className="p-2 text-right font-mono tabular-nums">{v.weighted_score.toFixed(1)}</td>
-                      <td className="p-2 text-right font-mono tabular-nums">{contrib.toFixed(1)}%</td>
-                      <td className="p-2 text-right font-mono tabular-nums text-tertiary">{v.inference_ms.toFixed(0)}ms</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
-
-      {result.rejected.length > 0 && (
-        <Card>
-          <CardHeader title="Modèles rejetés" subtitle={`${result.rejected.length} modèles exclus`} icon={<XCircle size={18} />} />
-          <div className="flex flex-wrap gap-2">
-            {result.rejected.map((v) => (
-              <span key={v.model_id} className="rounded-full bg-block/10 px-2.5 py-1 text-[10px] text-block">
-                {v.model_name} ({v.rejection_reason || v.error || `< ${String(result.config.medium_confidence_threshold)}%`})
-              </span>
-            ))}
-          </div>
-        </Card>
-      )}
     </>
   );
 }

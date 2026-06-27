@@ -23,7 +23,6 @@ const nav = [
   { href: "/orchestrate", label: "AI Orchestrator", icon: Brain },
   { href: "/council", label: "Security Council", icon: UsersRound },
   { href: "/consensus", label: "Consensus IA", icon: TrendingUp },
-  { href: "/models", label: "AI Models", icon: Layers },
   { href: "/sandbox", label: "Sandbox", icon: FlaskConical },
   { href: "/batch", label: "Batch Evaluation", icon: Boxes },
   { href: "/gpu", label: "GPU Observatory", icon: Cpu },

@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Outfit, Fira_Code } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Topbar } from "@/components/layout/Topbar";
+import { ConditionalShell } from "@/components/layout/ConditionalShell";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -36,15 +35,10 @@ export default function RootLayout({
     <html lang="fr" className={`${inter.variable} ${outfit.variable} ${fira.variable}`}>
       <body className="font-sans antialiased">
         <Providers>
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <div className="flex min-w-0 flex-1 flex-col">
-              <Topbar />
-              <main className="flex-1 px-6 py-6 lg:px-8">{children}</main>
-            </div>
-          </div>
+          <ConditionalShell>{children}</ConditionalShell>
         </Providers>
       </body>
     </html>
   );
 }
+

@@ -125,12 +125,19 @@ class MasterAIOrchestrator:
         return result
 
     def _select_experts(self, classification: str, models: Optional[List[str]]) -> List[str]:
+        def is_active_model(mid: str) -> bool:
+            model = self.registry.get_model(mid)
+            if not model:
+                return False
+            from backend.models_registry.base_model import ModelStatus
+            return model.status() == ModelStatus.LOADED
+
         if models:
-            selected = [m for m in models if self.experts.get_expert(m)]
+            selected = [m for m in models if is_active_model(m)]
         else:
-            selected = [m for m in CATEGORY_MODEL_MAP.get(classification, []) if self.experts.get_expert(m)]
+            selected = [m for m in CATEGORY_MODEL_MAP.get(classification, []) if is_active_model(m)]
             if not selected:
-                selected = [m for m in ("securityllm", "security_rag", "cysecbert", "secbert") if self.experts.get_expert(m)]
+                selected = [m for m in self.registry.list_ids() if is_active_model(m)]
         return selected[: self.config.max_selected_experts]
 
     def _log(self, result: CouncilResult):

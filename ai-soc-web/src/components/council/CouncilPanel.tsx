@@ -65,7 +65,25 @@ interface CouncilResult {
   metrics: { total_execution_ms: number; experts_completed: number; experts_failed: number };
 }
 
-const ORCHESTRATOR_URL = process.env.NEXT_PUBLIC_ORCHESTRATOR_URL || "http://localhost:8080";
+const ORCHESTRATOR_URL = process.env.NEXT_PUBLIC_ORCHESTRATOR_URL || "";
+
+const anonymize = (text: string): string => {
+  if (!text) return text;
+  return text
+    .replace(/cysecbert/gi, "Expert 1")
+    .replace(/secbert/gi, "Expert 2")
+    .replace(/phishsense-merged/gi, "Expert 3")
+    .replace(/phishsense/gi, "Expert 3")
+    .replace(/securityllm-merged/gi, "Expert 4")
+    .replace(/securityllm/gi, "Expert 4")
+    .replace(/security_rag/gi, "Expert RAG")
+    .replace(/rag/gi, "Expert RAG")
+    .replace(/CySecBERT/g, "Expert 1")
+    .replace(/SecBERT/g, "Expert 2")
+    .replace(/PhishSense 1B/g, "Expert 3")
+    .replace(/SecurityLLM/g, "Expert 4")
+    .replace(/Security RAG/g, "Expert RAG");
+};
 
 export default function CouncilPanel() {
   const [query, setQuery] = useState("Analyse ce mail: URGENT, cliquez ici pour verifier votre mot de passe.");
@@ -149,13 +167,13 @@ function CouncilDisplay({ result }: { result: CouncilResult }) {
       </div>
 
       <Card>
-        <CardHeader title="Réponse finale du Master AI" subtitle={result.final_response.primary_model ? `Modèle principal: ${result.final_response.primary_model}` : undefined} icon={<Sparkles size={18} />} />
+        <CardHeader title="Réponse finale du Master AI" subtitle={result.final_response.primary_model ? `Modèle principal: ${anonymize(result.final_response.primary_model)}` : undefined} icon={<Sparkles size={18} />} />
         <p className="rounded-lg border border-white/5 bg-black/20 p-4 text-sm leading-6 text-[#f0f4ff]">
-          {result.final_response.answer}
+          {anonymize(result.final_response.answer)}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {result.final_response.decision_reasons.map((reason) => (
-            <span key={reason} className="rounded-lg bg-primary/10 px-2.5 py-1 text-[11px] text-primary">{reason}</span>
+            <span key={reason} className="rounded-lg bg-primary/10 px-2.5 py-1 text-[11px] text-primary">{anonymize(reason)}</span>
           ))}
         </div>
       </Card>
@@ -226,8 +244,8 @@ function Timeline({ items }: { items: CouncilResult["timeline"] }) {
           <div key={item.name} className="flex items-center gap-3 rounded-lg bg-white/[0.02] px-3 py-2">
             <span className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold", item.status === "completed" ? "bg-accept/15 text-accept" : "bg-warn/15 text-warn")}>{index + 1}</span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium capitalize text-[#f0f4ff]">{item.name.replace(/_/g, " ")}</p>
-              <p className="text-[11px] text-secondary">{item.status} · {item.elapsed_ms.toFixed(0)} ms</p>
+              <p className="text-sm font-medium capitalize text-[#f0f4ff]">{anonymize(item.name.replace(/_/g, " "))}</p>
+              <p className="text-[11px] text-secondary">{anonymize(item.status)} · {item.elapsed_ms.toFixed(0)} ms</p>
             </div>
           </div>
         ))}
@@ -244,10 +262,10 @@ function Conversation({ messages }: { messages: CouncilMessage[] }) {
         {messages.map((message, index) => (
           <div key={`${message.timestamp}-${index}`} className={cn("rounded-lg border px-3 py-2 text-xs", message.speaker === "Master AI" ? "border-primary/20 bg-primary/10" : "border-white/5 bg-white/[0.02]")}>
             <div className="mb-1 flex items-center justify-between gap-3">
-              <span className="font-semibold text-[#f0f4ff]">{message.speaker}</span>
+              <span className="font-semibold text-[#f0f4ff]">{anonymize(message.speaker)}</span>
               <span className="rounded bg-black/20 px-1.5 py-0.5 font-mono text-[10px] text-tertiary">{message.phase}</span>
             </div>
-            <p className="leading-5 text-secondary">{message.content}</p>
+            <p className="leading-5 text-secondary">{anonymize(message.content)}</p>
           </div>
         ))}
       </div>
@@ -274,12 +292,12 @@ function ExpertsTable({ experts }: { experts: ExpertAnalysis[] }) {
           <tbody>
             {experts.map((expert) => (
               <tr key={expert.expert_id} className="border-b border-white/[0.03]">
-                <td className="p-2 font-medium text-[#f0f4ff]">{expert.expert_name}</td>
+                <td className="p-2 font-medium text-[#f0f4ff]">{anonymize(expert.expert_name)}</td>
                 <td className="p-2"><StatusPill status={expert.status} /></td>
                 <td className="p-2 font-mono">{expert.conclusion}</td>
                 <td className="p-2 text-right font-mono tabular-nums">{expert.confidence.toFixed(1)}%</td>
                 <td className="p-2 text-right font-mono tabular-nums text-tertiary">{expert.inference_ms.toFixed(0)} ms</td>
-                <td className="p-2 text-secondary">{expert.evidence.slice(0, 3).join(", ") || expert.error || "Aucune"}</td>
+                <td className="p-2 text-secondary">{anonymize(expert.evidence.slice(0, 3).join(", ") || expert.error || "Aucune")}</td>
               </tr>
             ))}
           </tbody>

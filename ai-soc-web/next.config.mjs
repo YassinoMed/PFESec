@@ -6,10 +6,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-
-  // Scope le tracing/output au répertoire ai-soc-web uniquement
-  outputFileTracingRoot: path.join(__dirname),
-
+  output: "export",
+  images: { unoptimized: true },
   // NOTE : on n'utilise PAS le proxy Next.js (rewrites).
   // L'app effectue ses appels directement côté client vers l'URL du backend.
   // Le backend inference_server.py renvoie déjà les headers CORS nécessaires

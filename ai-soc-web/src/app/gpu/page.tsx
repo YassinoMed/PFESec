@@ -178,18 +178,6 @@ export default function GpuPage() {
                   />
                 </AreaChart>
               </ResponsiveContainer>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {gpu.data?.available &&
-                  gpu.data.loaded_models.map((m) => (
-                    <span
-                      key={m}
-                      className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1 font-mono text-[11px] text-primary"
-                    >
-                      {m}
-                    </span>
-                  ))}
-              </div>
             </Card>
           </div>
         </>

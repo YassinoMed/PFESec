@@ -50,16 +50,7 @@ export default function CommandCenterPage() {
       />
 
       {/* KPIs */}
-      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Link href="/models" className="group">
-          <StatCard
-            label="AI Models"
-            value={`${fleetSummary?.total_models ?? "—"}`}
-            icon={<Layers size={16} />}
-            tone="primary"
-            sub={`${fleetSummary?.loaded ?? 0} chargés · ${fleetSummary?.health ?? "—"}`}
-          />
-        </Link>
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-3">
         <StatCard
           label="Détection phishing"
           value={phishing}
@@ -86,30 +77,6 @@ export default function CommandCenterPage() {
       <div className="grid gap-5 lg:grid-cols-3">
         {/* Colonne gauche */}
         <div className="space-y-4 lg:col-span-2">
-          {/* Fleet AI Models */}
-          {fleetSummary && (
-            <Card>
-              <CardHeader
-                title="Fleet AI Models"
-                subtitle={`${fleetSummary.total_models} modèles · ${fleetSummary.categories ? Object.keys(fleetSummary.categories).length : 0} catégories`}
-                icon={<Layers size={18} />}
-                action={
-                  <Link href="/models">
-                    <ShieldCheck size={18} className="text-primary transition-colors hover:text-primary/80" />
-                  </Link>
-                }
-              />
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-7">
-                {fleetSummary.categories && Object.entries(fleetSummary.categories).map(([cat, data]) => (
-                  <div key={cat} className="flex flex-col items-center rounded-lg bg-white/[0.02] p-2 text-center">
-                    <span className="text-lg font-bold tabular-nums text-[#f0f4ff]">{data.loaded}/{data.total}</span>
-                    <span className="text-[9px] uppercase tracking-wider text-tertiary">{cat.replace(/_/g, " ")}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-
           {/* Accès rapide aux modules */}
           <div className="grid gap-3 sm:grid-cols-2">
             <QuickLink
@@ -123,12 +90,6 @@ export default function CommandCenterPage() {
               icon={<Boxes size={18} />}
               title="Batch Evaluation"
               desc="Tests & métriques (precision, recall, F1)"
-            />
-            <QuickLink
-              href="/models"
-              icon={<Layers size={18} />}
-              title="AI Models"
-              desc={`${fleetSummary?.total_models ?? 0} modèles · Gestion de flotte`}
             />
           </div>
         </div>

@@ -148,7 +148,7 @@ export default function OrchestratePage() {
     setLoading(true);
     setResult(null);
     try {
-      const r = await fetch("http://localhost:8080/api/v1/security/query", {
+      const r = await fetch("/api/v1/security/query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query, user_role: "analyst" }),

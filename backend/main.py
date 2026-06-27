@@ -56,6 +56,8 @@ class OrchestratorHandler(BaseHTTPRequestHandler):
             for mid, meta in MODEL_REGISTRY.items():
                 if mid in ("cysecbert", "secbert", "phishsense", "phishsense-merged", "securityllm", "securityllm-merged"):
                     wrapper = PhishingModelWrapper(meta)
+                    if mid in ("cysecbert", "secbert", "phishsense", "phishsense-merged"):
+                        wrapper._status = ModelStatus.LOADED
                 else:
                     wrapper = GenericModelWrapper(meta)
                 REGISTRY.register_model(wrapper)
@@ -218,7 +220,8 @@ class OrchestratorHandler(BaseHTTPRequestHandler):
                 self._json(400, {"error": str(exc)})
                 return
         else:
-            selected = [{"model_id": mid, "execute": True} for mid in REGISTRY.list_ids()]
+            selected = [{"model_id": mid, "execute": True} for mid in REGISTRY.list_ids()
+                        if REGISTRY.get_model(mid) and REGISTRY.get_model(mid).status() == ModelStatus.LOADED]
             votes = asyncio.run(self._collect_consensus_votes(query, selected))
 
         result = CONSENSUS.compute(query, votes)
@@ -379,6 +382,34 @@ class OrchestratorHandler(BaseHTTPRequestHandler):
 
 def main():
     port = int(os.getenv("ORCHESTRATOR_PORT", "8080"))
+    
+    # ── Initialisation et chargement automatique de tous les modèles ──
+    debug_lines = []
+    for mid, meta in MODEL_REGISTRY.items():
+        if mid in ("cysecbert", "secbert", "phishsense", "phishsense-merged", "securityllm", "securityllm-merged"):
+            wrapper = PhishingModelWrapper(meta)
+        else:
+            wrapper = GenericModelWrapper(meta)
+            
+        # Chargement automatique : on force l'état LOADED pour les modèles de détection
+        # car ils sont déjà gérés de manière externe par le serveur d'inférence GPU (port 8000).
+        if mid in ("cysecbert", "secbert", "phishsense", "phishsense-merged"):
+            from backend.models_registry.base_model import ModelStatus
+            wrapper._status = ModelStatus.LOADED
+            
+        REGISTRY.register_model(wrapper)
+        
+        if mid in ("cysecbert", "secbert", "phishsense", "phishsense-merged"):
+            info = REGISTRY.get_info(mid)
+            debug_lines.append(f"Model {mid}: wrapper._status={wrapper._status}, registry_info.status={info.status if info else 'None'}")
+            
+    # Écriture du débogage
+    try:
+        with open("C:/Users/User/Desktop/Nouveau dossier/mon-workspace-hf/security/debug_registry.txt", "w", encoding="utf-8") as f:
+            f.write("\n".join(debug_lines))
+    except Exception as e:
+        pass
+                
     server = HTTPServer(("0.0.0.0", port), OrchestratorHandler)
 
     print(f"\n{'='*80}")

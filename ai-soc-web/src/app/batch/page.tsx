@@ -84,20 +84,7 @@ export default function BatchPage() {
             ))}
           </select>
 
-          <label className="mb-1.5 block text-[11px] uppercase tracking-wider text-secondary">
-            Modèle
-          </label>
-          <select
-            value={model}
-            onChange={(e) => setSelectedModel(e.target.value)}
-            className="mb-4 w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-[#f0f4ff] focus:border-primary/50 focus:outline-none"
-          >
-            {modelList.map((m) => (
-              <option key={m.id} value={m.id} className="bg-base-800">
-                {m.icon} {m.name}
-              </option>
-            ))}
-          </select>
+          {/* Modèle masqué pour l'utilisateur, exécuté par défaut */}
 
           <button
             onClick={() => mutation.mutate()}
@@ -170,7 +157,7 @@ function BatchResults({
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Gauges */}
         <Card>
-          <CardHeader title="Synthèse" subtitle={report.model} icon={<Boxes size={18} />} />
+          <CardHeader title="Synthèse" subtitle="Rapport d'évaluation global" icon={<Boxes size={18} />} />
           <div className="flex items-center justify-around">
             <RadialGauge value={report.accuracy * 100} label="Accuracy" sublabel="global" tone="primary" size={110} />
             <RadialGauge value={metrics.f1 * 100} label="F1" sublabel="harmonique" tone="warn" size={110} />
