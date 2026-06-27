@@ -1,3 +1,5 @@
+"""Council Expert Manager — Manages all expert agents including 15 virtual experts."""
+
 import asyncio
 import re
 import time
@@ -78,6 +80,10 @@ class RegistryCouncilExpert(CouncilExpert):
                 evidence=_extract_evidence(query, output, response),
                 limitations=_extract_limitations(output, confidence),
                 inference_ms=elapsed_ms,
+                recommendations=[],
+                iocs=[],
+                mitre_techniques=[],
+                severity="UNKNOWN",
             )
         except Exception as exc:
             return ExpertAnalysis(
@@ -96,9 +102,25 @@ class ExpertModelManager:
     def __init__(self, registry):
         self.registry = registry
         self._dynamic: Dict[str, CouncilExpert] = {}
+        self._virtual_registered = False
 
     def register_expert(self, expert: CouncilExpert):
         self._dynamic[expert.expert_id] = expert
+
+    def register_all_virtual_experts(self):
+        """Register all 15 virtual expert agents."""
+        if self._virtual_registered:
+            return
+        try:
+            from backend.council.virtual_experts import ALL_VIRTUAL_EXPERTS
+            for ExpertClass in ALL_VIRTUAL_EXPERTS:
+                expert = ExpertClass()
+                self._dynamic[expert.expert_id] = expert
+            self._virtual_registered = True
+        except Exception as exc:
+            import traceback
+            print(f"[ExpertModelManager] Failed to register virtual experts: {exc}")
+            traceback.print_exc()
 
     def get_expert(self, expert_id: str) -> Optional[CouncilExpert]:
         if expert_id in self._dynamic:
@@ -157,6 +179,8 @@ class ExpertModelManager:
                 limitations=["timeout"],
             )
 
+
+# ── Helper functions ──────────────────────────────────────────────────────────
 
 def _extract_response(output: Dict) -> Any:
     for key in ("response", "prediction", "generated_text", "verdict"):

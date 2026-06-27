@@ -1,0 +1,16 @@
+[
+  {"text": "AWS S3 Public Bucket: Misconfiguration allowing public read/write. Detected via: AWS Config rule S3-BUCKET-PUBLIC-READ-PROHIBITED. Remediation: Block Public Access at account level, enable S3 Access Analyzer.", "source": "cloud_k8s"},
+  {"text": "AWS IAM Least Privilege: Root account should not be used operationally. Use IAM roles with minimal permissions. Enable MFA on all IAM users. Use AWS Organizations SCPs to enforce guardrails.", "source": "cloud_k8s"},
+  {"text": "Azure Active Directory: Enable Conditional Access. Block legacy authentication protocols. Use Privileged Identity Management (PIM) for just-in-time privileged access. Enable Identity Protection for risky sign-in detection.", "source": "cloud_k8s"},
+  {"text": "GCP Security Best Practices: Enable VPC Service Controls. Use Workload Identity Federation instead of service account keys. Enable Cloud Audit Logs for all services. Use Binary Authorization for container image verification.", "source": "cloud_k8s"},
+  {"text": "Cloud Security Posture Management (CSPM): Tools: Prisma Cloud, AWS Security Hub, Azure Defender, GCP Security Command Center. Continuously assess cloud configurations against CIS Benchmarks.", "source": "cloud_k8s"},
+  {"text": "Kubernetes RBAC: Avoid ClusterRole 'cluster-admin' for service accounts. Use namespace-scoped roles. Audit with: kubectl-who-can, rakkess, audit2rbac. Enable audit logging for API server.", "source": "cloud_k8s"},
+  {"text": "Kubernetes Pod Security: Use Pod Security Admission (PSA) in 'restricted' mode. Prohibit: privileged containers, hostPath mounts, hostNetwork, runAsRoot. Enforce with OPA Gatekeeper or Kyverno.", "source": "cloud_k8s"},
+  {"text": "Kubernetes Network Policies: Default deny all ingress/egress. Explicitly allow required communication paths. Use Calico or Cilium for L7 network policy enforcement.", "source": "cloud_k8s"},
+  {"text": "Kubernetes Runtime Security: Deploy Falco for syscall-level anomaly detection. Monitor: container privilege escalation, unexpected outbound connections, file system writes to sensitive paths.", "source": "cloud_k8s"},
+  {"text": "Container Image Security: Scan images with Trivy, Grype, or Snyk. Use distroless or scratch base images. Never use 'latest' tag in production. Sign images with Cosign (sigstore).", "source": "cloud_k8s"},
+  {"text": "etcd Security: Enable TLS mutual authentication. Restrict access to etcd port (2379/2380). Encrypt etcd data at rest using KMS provider. Regular etcd backups — etcd contains ALL cluster secrets.", "source": "cloud_k8s"},
+  {"text": "CIS Kubernetes Benchmark: 6 sections — Control Plane, Worker Nodes, Policies, Managed Services. Key controls: API server anonymous auth disabled, audit logging enabled, node restriction admission plugin.", "source": "cloud_k8s"},
+  {"text": "Cloud Misconfiguration Statistics: 99% of cloud security failures will be customer's fault through 2025 (Gartner). Top misconfigs: overly permissive IAM, public storage, lack of encryption, disabled logging.", "source": "cloud_k8s"},
+  {"text": "CloudTrail / Audit Logs: Always enable. Configure multi-region trail. Send to S3 with Object Lock (WORM). Alert on: root account usage, API calls from unexpected regions, IAM policy changes, security group changes.", "source": "cloud_k8s"}
+]

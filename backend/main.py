@@ -56,7 +56,7 @@ class OrchestratorHandler(BaseHTTPRequestHandler):
             for mid, meta in MODEL_REGISTRY.items():
                 if mid in ("cysecbert", "secbert", "phishsense", "phishsense-merged", "securityllm", "securityllm-merged"):
                     wrapper = PhishingModelWrapper(meta)
-                    if mid in ("cysecbert", "secbert", "phishsense", "phishsense-merged"):
+                    if mid in ("cysecbert", "secbert", "phishsense", "phishsense-merged", "securityllm", "securityllm-merged"):
                         wrapper._status = ModelStatus.LOADED
                 else:
                     wrapper = GenericModelWrapper(meta)
@@ -393,13 +393,13 @@ def main():
             
         # Chargement automatique : on force l'état LOADED pour les modèles de détection
         # car ils sont déjà gérés de manière externe par le serveur d'inférence GPU (port 8000).
-        if mid in ("cysecbert", "secbert", "phishsense", "phishsense-merged"):
+        if mid in ("cysecbert", "secbert", "phishsense", "phishsense-merged", "securityllm", "securityllm-merged"):
             from backend.models_registry.base_model import ModelStatus
             wrapper._status = ModelStatus.LOADED
             
         REGISTRY.register_model(wrapper)
         
-        if mid in ("cysecbert", "secbert", "phishsense", "phishsense-merged"):
+        if mid in ("cysecbert", "secbert", "phishsense", "phishsense-merged", "securityllm", "securityllm-merged"):
             info = REGISTRY.get_info(mid)
             debug_lines.append(f"Model {mid}: wrapper._status={wrapper._status}, registry_info.status={info.status if info else 'None'}")
             

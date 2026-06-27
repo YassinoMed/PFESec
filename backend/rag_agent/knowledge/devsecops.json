@@ -1,0 +1,16 @@
+[
+  {"text": "Secret Scanning: Never commit secrets to source code. Use tools: TruffleHog, GitLeaks, detect-secrets. Pre-commit hooks prevent accidental exposure. GitHub Advanced Security provides native secret scanning.", "source": "devsecops"},
+  {"text": "Dependency Scanning: Use OWASP Dependency-Check, Snyk, or Dependabot. Check for known CVEs in dependencies (SCA - Software Composition Analysis). Regularly update dependencies.", "source": "devsecops"},
+  {"text": "SAST (Static Application Security Testing): Analyze code for security flaws without execution. Tools: SonarQube, Semgrep, CodeQL, Checkmarx. Integrate in CI pipeline as a blocking gate.", "source": "devsecops"},
+  {"text": "DAST (Dynamic Application Security Testing): Test running application for vulnerabilities. Tools: OWASP ZAP, Burp Suite, Nuclei. Run against staging environment in CI/CD pipeline.", "source": "devsecops"},
+  {"text": "Supply Chain Security: Verify package integrity (checksums, signatures). Use private registries with mirroring. SLSA framework for build provenance. Software Bill of Materials (SBOM) for visibility.", "source": "devsecops"},
+  {"text": "Dependency Confusion Attack: Attacker publishes malicious public package with same name as internal private package. Defense: use namespace scoping, set explicit registry URLs, verify package origin.", "source": "devsecops"},
+  {"text": "CI/CD Pipeline Security: Least-privilege pipeline credentials. Pin action versions (GitHub Actions) to full SHA. Separate pipeline environments (dev/staging/prod). Audit pipeline logs for unexpected behavior.", "source": "devsecops"},
+  {"text": "Infrastructure as Code (IaC) Security: Scan Terraform/CloudFormation/Ansible with tfsec, Checkov, or Terrascan. Detect: open security groups, unencrypted storage, public S3 buckets, disabled logging.", "source": "devsecops"},
+  {"text": "Container Security in DevSecOps: Scan Dockerfile for vulnerabilities (Trivy, Hadolint). Never run containers as root. Use multi-stage builds to minimize attack surface. Sign and verify container images.", "source": "devsecops"},
+  {"text": "OWASP DevSecOps Maturity Model (DSOMM): 4 levels from 1 (basic) to 4 (advanced). Covers: Test and Verification, Build and Deployment, Patch Management, Education and Guidance.", "source": "devsecops"},
+  {"text": "Secrets Management: Use dedicated secrets managers: HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, GCP Secret Manager. Rotate secrets automatically. Never store secrets in environment variables for containers.", "source": "devsecops"},
+  {"text": "Typosquatting in package registries: Attackers publish packages with names similar to popular ones (e.g., 'reqeusts' vs 'requests'). Use allowlists for approved packages. Monitor for new packages matching internal names.", "source": "devsecops"},
+  {"text": "Artifact Registry Security: Scan artifacts before deployment. Use immutable tags in production. Enable vulnerability scanning on push (ECR, GCR, Docker Hub). Quarantine critical vulnerabilities.", "source": "devsecops"},
+  {"text": "Shift-Left Security: Integrate security early in the SDLC. Developer security training (OWASP Top 10, secure coding). Threat modeling in design phase. Security champions in each development team.", "source": "devsecops"}
+]

@@ -7,6 +7,6 @@
   "cross_validation_enabled": true,
   "reflection_enabled": true,
   "fact_check_enabled": true,
-  "max_selected_experts": 6,
+  "max_selected_experts": 10,
   "log_dir": "logs/council"
 }

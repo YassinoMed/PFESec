@@ -78,12 +78,18 @@ export default function CommandCenterPage() {
         {/* Colonne gauche */}
         <div className="space-y-4 lg:col-span-2">
           {/* Accès rapide aux modules */}
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <QuickLink
               href="/analyze"
               icon={<Crosshair size={18} />}
               title="Threat Analysis"
               desc="Analyse multi-modèles avec consensus"
+            />
+            <QuickLink
+              href="/council"
+              icon={<Brain size={18} />}
+              title="Security Council"
+              desc="Master AI, experts & timeline de décision"
             />
             <QuickLink
               href="/batch"

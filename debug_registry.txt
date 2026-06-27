@@ -1,3 +1,4 @@
 Model cysecbert: wrapper._status=ModelStatus.LOADED, registry_info.status=ModelStatus.LOADED
 Model secbert: wrapper._status=ModelStatus.LOADED, registry_info.status=ModelStatus.LOADED
 Model phishsense: wrapper._status=ModelStatus.LOADED, registry_info.status=ModelStatus.LOADED
+Model securityllm: wrapper._status=ModelStatus.LOADED, registry_info.status=ModelStatus.LOADED

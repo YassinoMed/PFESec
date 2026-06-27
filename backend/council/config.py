@@ -15,7 +15,7 @@ class CouncilConfig:
     cross_validation_enabled: bool = True
     reflection_enabled: bool = True
     fact_check_enabled: bool = True
-    max_selected_experts: int = 6
+    max_selected_experts: int = 10
     log_dir: str = "logs/council"
 
     @classmethod

@@ -4,18 +4,21 @@ from backend.config import CONFIG
 
 
 CATEGORY_MODEL_MAP: Dict[str, List[str]] = {
-    "phishing_analysis": CONFIG.model_router.phishing_models,
-    "email_analysis": CONFIG.model_router.phishing_models,
+    "phishing_analysis": ["cysecbert", "secbert", "phishsense", "securityllm"],
+    "email_analysis": ["cysecbert", "secbert", "phishsense", "securityllm"],
     "malware_analysis": ["securityllm"],
-    "incident_response": CONFIG.model_router.soc_models,
-    "threat_hunting": CONFIG.model_router.soc_models,
-    "sigma_analysis": ["securityllm"],
-    "threat_intelligence": CONFIG.model_router.threat_intel_models,
+    "url_analysis": ["cysecbert", "secbert", "phishsense"],
+    "ioc_analysis": ["securityllm"],
     "cve_analysis": ["securityllm", "rag"],
-    "vulnerability_assessment": ["securityllm", "rag"],
-    "soc_assistance": CONFIG.model_router.soc_models,
+    "sigma_analysis": ["securityllm"],
+    "incident_response": ["securityllm", "security_rag"],
+    "threat_hunting": ["securityllm", "security_rag"],
+    "log_analysis": ["securityllm", "security_rag"],
+    "kubernetes_security": ["securityllm", "rag"],
+    "cloud_security": ["securityllm", "rag"],
+    "devsecops_review": ["securityllm"],
     "rag_question": ["rag"],
-    "general_security_question": CONFIG.model_router.general_models,
+    "general_security_question": ["securityllm"],
 }
 
 TYPE_MAP: Dict[str, str] = {

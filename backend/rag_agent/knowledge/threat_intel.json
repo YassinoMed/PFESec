@@ -1,0 +1,17 @@
+[
+  {"text": "APT28 (Fancy Bear): Russian GRU threat actor. Known TTPs: T1566 (Phishing), T1071 (C2 over HTTP), T1059.001 (PowerShell). Targets: government, military, aerospace.", "source": "cti"},
+  {"text": "APT29 (Cozy Bear / Nobelium): FSB-linked actor. TTPs: T1195.002 (Supply Chain), T1078 (Valid Accounts), T1550.001 (Application Access Token). SolarWinds breach 2020.", "source": "cti"},
+  {"text": "Lazarus Group: DPRK threat actor. Focus: financial theft, ransomware (WannaCry). TTPs: T1486, T1041, T1003.", "source": "cti"},
+  {"text": "LockBit 3.0: Ransomware-as-a-Service group. Initial access via phishing or RDP brute-force. Exfiltrates before encrypting. Double extortion model.", "source": "ransomware"},
+  {"text": "Conti ransomware: Uses TrickBot for initial access. Exploits CVE-2020-1472 (Zerologon) for lateral movement. Encrypts all accessible network shares.", "source": "ransomware"},
+  {"text": "BEC (Business Email Compromise): Attacker impersonates executive via spoofed email. Requests wire transfer or credential access. No malware involved — purely social engineering.", "source": "bec"},
+  {"text": "Cobalt Strike: Commercial C2 framework widely abused by threat actors. Beacons communicate over HTTPS using malleable profiles. Detected by: anomalous certificate Subject, jitter patterns.", "source": "c2"},
+  {"text": "Phishing Kit: Pre-packaged phishing infrastructure. Typically clones login pages of banking or cloud services. Often hosted on compromised legitimate sites or bulletproof hosters.", "source": "phishing"},
+  {"text": "Living off the Land (LotL): Technique using legitimate OS tools (PowerShell, WMI, certutil) to evade detection. Difficult to detect without behavioral baseline.", "source": "evasion"},
+  {"text": "IOC lifecycle: Collect → Enrich → Correlate → Share. IOC enrichment platforms: VirusTotal, OTX (AlienVault), MISP, Shodan, URLVoid.", "source": "process"},
+  {"text": "Threat Intelligence Sharing: STIX/TAXII standard. ISACs (Information Sharing and Analysis Centers) provide sector-specific TI. MISP is the de facto open-source TI platform.", "source": "process"},
+  {"text": "TTPs (Tactics, Techniques, Procedures): More persistent than IOCs. Based on adversary behavior. MITRE ATT&CK provides the reference taxonomy.", "source": "framework"},
+  {"text": "Diamond Model of Intrusion Analysis: Four features — Adversary, Infrastructure, Capability, Victim. Used for attribution and campaign tracking.", "source": "framework"},
+  {"text": "Emotet: Banking trojan/loader delivering TrickBot, Ryuk. Spreads via malicious Office macros. C2 uses fast-flux DNS. Disrupted by Europol in 2021, returned in 2022.", "source": "malware"},
+  {"text": "QakBot (QBot): Banking malware using email thread hijacking for distribution. Deploys Cobalt Strike and ransomware. LOTL techniques. Disrupted by FBI in 2023.", "source": "malware"}
+]

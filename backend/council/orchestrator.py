@@ -1,3 +1,10 @@
+"""MasterAIOrchestrator v2 — Full AI Security Council with Reasoning Engine.
+
+Orchestrates: Classification → Expert Selection → Parallel Analysis → Discussion →
+Evidence Fusion → Debate → Cross-validation → Fact-check → Consensus →
+Attack Reconstruction → Risk Assessment → Response Plan → Decision Journal.
+"""
+
 import json
 import os
 import time
@@ -21,14 +28,46 @@ from backend.council.engines import (
     detect_contradictions,
 )
 from backend.council.expert import ExpertModelManager
+from backend.council.reasoning_engine import ReasoningEngine
 from backend.council.types import CouncilMessage, CouncilResult
 
 
+# ── Category → virtual expert mapping ────────────────────────────────────────
+
+CATEGORY_VIRTUAL_EXPERT_MAP: Dict[str, List[str]] = {
+    "phishing_analysis": ["phishing_expert", "email_header_expert", "url_expert", "threat_intel_expert"],
+    "email_analysis": ["email_header_expert", "phishing_expert", "url_expert", "threat_intel_expert"],
+    "malware_analysis": ["malware_expert", "mitre_expert", "ioc_expert"],
+    "url_analysis": ["url_expert", "phishing_expert", "ioc_expert", "threat_intel_expert"],
+    "ioc_analysis": ["ioc_expert", "threat_intel_expert", "mitre_expert"],
+    "cve_analysis": ["vulnerability_expert", "risk_assessment_virtual_expert", "mitre_expert"],
+    "sigma_analysis": ["sigma_expert", "mitre_expert", "soc_analyst_expert"],
+    "incident_response": ["incident_response_expert", "soc_analyst_expert", "risk_assessment_virtual_expert"],
+    "threat_hunting": ["threat_intel_expert", "mitre_expert", "sigma_expert", "soc_analyst_expert"],
+    "log_analysis": ["soc_analyst_expert", "sigma_expert", "mitre_expert"],
+    "kubernetes_security": ["kubernetes_security_expert", "cloud_security_expert", "devsecops_expert"],
+    "cloud_security": ["cloud_security_expert", "kubernetes_security_expert", "risk_assessment_virtual_expert"],
+    "devsecops_review": ["devsecops_expert", "vulnerability_expert", "risk_assessment_virtual_expert"],
+    "rag_question": ["rag_knowledge_expert", "mitre_expert", "vulnerability_expert"],
+    "general_security_question": [
+        "phishing_expert", "malware_expert", "ioc_expert",
+        "mitre_expert", "risk_assessment_virtual_expert",
+    ],
+}
+
+
 class MasterAIOrchestrator:
-    def __init__(self, registry, config: Optional[CouncilConfig] = None, expert_manager: Optional[ExpertModelManager] = None):
+    def __init__(
+        self,
+        registry,
+        config: Optional[CouncilConfig] = None,
+        expert_manager: Optional[ExpertModelManager] = None,
+    ):
         self.registry = registry
         self.config = config or CouncilConfig.default()
         self.experts = expert_manager or ExpertModelManager(registry)
+        # Register all 15 virtual experts at startup
+        self.experts.register_all_virtual_experts()
         self.classifier = QueryClassifierAgent()
         self.discussion = DiscussionEngine()
         self.debate = DebateEngine()
@@ -38,71 +77,136 @@ class MasterAIOrchestrator:
         self.reflection = ReflectionEngine()
         self.explainability = ExplainabilityEngine()
         self.metrics = MetricsCollector()
+        # v2 — Master AI Reasoning Engine
+        self.reasoning_engine = ReasoningEngine()
 
-    async def run(self, query: str, user_role: str = "analyst", context: Optional[Dict] = None, models: Optional[List[str]] = None) -> CouncilResult:
+    async def run(
+        self,
+        query: str,
+        user_role: str = "analyst",
+        context: Optional[Dict] = None,
+        models: Optional[List[str]] = None,
+    ) -> CouncilResult:
         started_at = time.time()
         stage_times: Dict[str, float] = {}
         timeline = []
-        conversation = [CouncilMessage("Master AI", None, "start", "Initialisation du AI Security Council.")]
+        conversation = [CouncilMessage("Master AI", None, "start", "Initialisation du AI Security Council v2.")]
 
         if not self.config.enabled:
             raise RuntimeError("AI Security Council disabled by configuration")
 
+        # ── Stage 1: Classification ──────────────────────────────────────
         t = time.time()
         agent_ctx = AgentContext(query=query, user_role=user_role, metadata=context or {})
         classification_result = await self.classifier.run(agent_ctx)
         classification = classification_result.output.get("primary_category", "general_security_question")
+        classification_confidence = classification_result.confidence
         stage_times["classification"] = (time.time() - t) * 1000
         timeline.append(_stage("classification", "completed", stage_times["classification"]))
 
+        # ── Stage 2: Expert Selection ────────────────────────────────────
         t = time.time()
         selected = self._select_experts(classification, models)
         stage_times["selection"] = (time.time() - t) * 1000
         timeline.append(_stage("selection", "completed", stage_times["selection"], {"models": selected}))
-        conversation.append(CouncilMessage("Master AI", None, "selection", f"Experts selectionnes: {', '.join(selected) or 'aucun'}"))
+        conversation.append(CouncilMessage(
+            "Master AI", None, "selection",
+            f"Experts selectionnes: {', '.join(selected) or 'aucun'}",
+        ))
 
+        # ── Stage 3: Parallel Expert Analysis ───────────────────────────
         t = time.time()
         analyses = await self.experts.run_parallel(query, selected, self.config.expert_timeout_s, context)
         stage_times["parallel_analysis"] = (time.time() - t) * 1000
         timeline.append(_stage("parallel_analysis", "completed", stage_times["parallel_analysis"]))
 
+        # ── Stage 4: Discussion ──────────────────────────────────────────
         t = time.time()
         conversation.extend(await self.discussion.interview(self.experts, analyses))
         stage_times["discussion"] = (time.time() - t) * 1000
         timeline.append(_stage("discussion", "completed", stage_times["discussion"]))
 
+        # ── Stage 5: Debate ──────────────────────────────────────────────
         t = time.time()
         contradictions = detect_contradictions(analyses, self.config.disagreement_threshold)
         if debate_needed(analyses, contradictions, self.config.min_confidence_for_no_debate):
-            conversation.extend(await self.debate.debate(self.experts, analyses, contradictions, self.config.max_debate_rounds))
+            conversation.extend(await self.debate.debate(
+                self.experts, analyses, contradictions, self.config.max_debate_rounds
+            ))
             debate_status = "completed"
         else:
             debate_status = "skipped"
         stage_times["debate"] = (time.time() - t) * 1000
         timeline.append(_stage("debate", debate_status, stage_times["debate"], {"contradictions": len(contradictions)}))
 
+        # ── Stage 6: Cross-validation ────────────────────────────────────
         t = time.time()
         validations = []
         if self.config.cross_validation_enabled:
             validations = await self.cross_validation.validate(self.experts, analyses)
         stage_times["cross_validation"] = (time.time() - t) * 1000
-        timeline.append(_stage("cross_validation", "completed" if validations else "skipped", stage_times["cross_validation"], {"items": len(validations)}))
+        timeline.append(_stage(
+            "cross_validation",
+            "completed" if validations else "skipped",
+            stage_times["cross_validation"],
+            {"items": len(validations)},
+        ))
 
+        # ── Stage 7: Fact-check ──────────────────────────────────────────
         t = time.time()
-        fact_check = self.fact_check.check(query, analyses) if self.config.fact_check_enabled else self.fact_check.check("", [])
+        fact_check = (
+            self.fact_check.check(query, analyses)
+            if self.config.fact_check_enabled
+            else self.fact_check.check("", [])
+        )
         stage_times["fact_check"] = (time.time() - t) * 1000
-        timeline.append(_stage("fact_check", "completed" if self.config.fact_check_enabled else "skipped", stage_times["fact_check"], {"references": len(fact_check.references)}))
+        timeline.append(_stage(
+            "fact_check",
+            "completed" if self.config.fact_check_enabled else "skipped",
+            stage_times["fact_check"],
+            {"references": len(fact_check.references)},
+        ))
 
+        # ── Stage 8: Consensus ───────────────────────────────────────────
         t = time.time()
-        consensus = self.consensus.compute(query, analyses, contradictions)
+        consensus = self.consensus.compute(query, analyses, contradictions, fact_check=fact_check)
         stage_times["consensus"] = (time.time() - t) * 1000
-        timeline.append(_stage("consensus", "completed", stage_times["consensus"], {"score": consensus.get("global_score", 0.0)}))
+        timeline.append(_stage(
+            "consensus", "completed", stage_times["consensus"],
+            {"score": consensus.get("global_score", 0.0)},
+        ))
 
+        # ── Stage 9: Final Response + Reflection ─────────────────────────
         t = time.time()
         final_response = self.explainability.build(query, analyses, consensus, fact_check, contradictions)
-        reflection = self.reflection.reflect(final_response, contradictions, fact_check) if self.config.reflection_enabled else {"passed": True, "issues": [], "action": "disabled"}
+        reflection = (
+            self.reflection.reflect(final_response, contradictions, fact_check)
+            if self.config.reflection_enabled
+            else {"passed": True, "issues": [], "action": "disabled"}
+        )
         stage_times["reflection"] = (time.time() - t) * 1000
-        timeline.append(_stage("reflection", "completed" if self.config.reflection_enabled else "skipped", stage_times["reflection"], reflection))
+        timeline.append(_stage(
+            "reflection",
+            "completed" if self.config.reflection_enabled else "skipped",
+            stage_times["reflection"],
+            reflection,
+        ))
+
+        # ── v2: Master AI Reasoning Engine ──────────────────────────────
+        t = time.time()
+        reasoning_artifacts = self.reasoning_engine.execute(
+            query=query,
+            classification=classification,
+            classification_confidence=classification_confidence,
+            selected_experts=selected,
+            analyses=analyses,
+            contradictions=contradictions,
+            cross_validations=validations,
+            fact_check=fact_check,
+            consensus=consensus,
+        )
+        stage_times["reasoning_engine"] = (time.time() - t) * 1000
+        timeline.append(_stage("reasoning_engine", "completed", stage_times["reasoning_engine"]))
 
         metrics = self.metrics.collect(started_at, stage_times, analyses)
         result = CouncilResult(
@@ -120,12 +224,22 @@ class MasterAIOrchestrator:
             timeline=timeline,
             metrics=metrics,
             config=self.config.to_dict(),
+            # v2 extensions
+            reasoning_trace=reasoning_artifacts.get("reasoning_trace"),
+            attack_timeline=reasoning_artifacts.get("attack_timeline"),
+            risk_assessment=reasoning_artifacts.get("risk_assessment"),
+            response_plan=reasoning_artifacts.get("response_plan"),
+            decision_journal=reasoning_artifacts.get("decision_journal"),
+            evidence_fusion=reasoning_artifacts.get("evidence_fusion"),
         )
         self._log(result)
         return result
 
     def _select_experts(self, classification: str, models: Optional[List[str]]) -> List[str]:
         def is_active_model(mid: str) -> bool:
+            # Virtual experts are always active
+            if mid in self.experts._dynamic:
+                return True
             model = self.registry.get_model(mid)
             if not model:
                 return False
@@ -135,9 +249,26 @@ class MasterAIOrchestrator:
         if models:
             selected = [m for m in models if is_active_model(m)]
         else:
-            selected = [m for m in CATEGORY_MODEL_MAP.get(classification, []) if is_active_model(m)]
+            # Combine GPU models + virtual experts for the category
+            gpu_models = [m for m in CATEGORY_MODEL_MAP.get(classification, []) if is_active_model(m)]
+            virtual_experts = [
+                m for m in CATEGORY_VIRTUAL_EXPERT_MAP.get(classification, CATEGORY_VIRTUAL_EXPERT_MAP["general_security_question"])
+                if is_active_model(m)
+            ]
+            # GPU models first, then virtual experts
+            seen = set()
+            selected = []
+            for mid in (gpu_models + virtual_experts):
+                if mid not in seen:
+                    seen.add(mid)
+                    selected.append(mid)
+
+            # Fallback: all registry models + top virtual experts
             if not selected:
-                selected = [m for m in self.registry.list_ids() if is_active_model(m)]
+                selected = [
+                    m for m in self.registry.list_ids() if is_active_model(m)
+                ] + virtual_experts[:3]
+
         return selected[: self.config.max_selected_experts]
 
     def _log(self, result: CouncilResult):
@@ -145,7 +276,7 @@ class MasterAIOrchestrator:
             log_dir = os.getenv("COUNCIL_LOG_DIR", self.config.log_dir)
             os.makedirs(log_dir, exist_ok=True)
             ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f")
-            with open(os.path.join(log_dir, f"council_{ts}.json"), "w", encoding="utf-8") as f:
+            with open(os.path.join(log_dir, f"council_v2_{ts}.json"), "w", encoding="utf-8") as f:
                 json.dump(result.to_dict(), f, ensure_ascii=False, indent=2, default=str)
         except Exception:
             pass

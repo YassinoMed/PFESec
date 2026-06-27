@@ -128,7 +128,7 @@ class CouncilConsensusEngine:
     def __init__(self):
         self.engine = ConsensusEngine(ConsensusConfig.default())
 
-    def compute(self, query: str, analyses: List[ExpertAnalysis], contradictions: List[Dict]) -> Dict:
+    def compute(self, query: str, analyses: List[ExpertAnalysis], contradictions: List[Dict], fact_check = None) -> Dict:
         votes = [
             ModelVote(
                 model_id=a.expert_id,
@@ -143,8 +143,102 @@ class CouncilConsensusEngine:
             for a in analyses
         ]
         result = self.engine.compute(query, votes).to_dict()
+
+        # --- Advanced Consensus based on Evidence ---
+        completed_analyses = [a for a in analyses if a.status == "completed"]
+
+        # 1. Gather all evidence
+        unified_evidence = []
+        for a in completed_analyses:
+            unified_evidence.extend(a.evidence)
+        unified_evidence = list(set(unified_evidence))
+
+        # 2. Gather IOCs
+        unified_iocs = []
+        for a in completed_analyses:
+            unified_iocs.extend(a.iocs)
+        seen_iocs = set()
+        dedup_iocs = []
+        for ioc in unified_iocs:
+            key = (ioc.get("type"), ioc.get("value"))
+            if key not in seen_iocs:
+                seen_iocs.add(key)
+                dedup_iocs.append(ioc)
+
+        # 3. RAG Context count
+        rag_count = len(fact_check.references) if fact_check and hasattr(fact_check, 'references') else 0
+
+        # 4. MITRE ATT&CK techniques
+        mitre_techs = []
+        for a in completed_analyses:
+            mitre_techs.extend(a.mitre_techniques)
+        mitre_techs = list(set(mitre_techs))
+
+        # Calculate Consensus Score
+        base_score = result.get("global_score", 0.0)
+
+        # Deduct penalty for contradictions (only count if both experts have confidence >= 30.0)
+        significant_contradictions = []
+        for c in contradictions:
+            left_exp = next((a for a in analyses if a.expert_id == c["left"]), None)
+            right_exp = next((a for a in analyses if a.expert_id == c["right"]), None)
+            if left_exp and right_exp:
+                if left_exp.confidence >= 30.0 and right_exp.confidence >= 30.0:
+                    significant_contradictions.append(c)
+            else:
+                significant_contradictions.append(c)
+
+        contradiction_count = len(significant_contradictions)
+        penalty = contradiction_count * 12.0
+
+        # Boosts based on evidence/IOCs/RAG
+        evidence_bonus = min(len(unified_evidence) * 3.5, 15.0)
+        ioc_bonus = min(len(dedup_iocs) * 5.0, 15.0)
+        rag_bonus = min(rag_count * 4.0, 12.0)
+
+        # Agreement check
+        block_votes = sum(1 for a in completed_analyses if a.conclusion == "BLOCK")
+        accept_votes = sum(1 for a in completed_analyses if a.conclusion == "ACCEPT")
+        total_votes = block_votes + accept_votes
+
+        agreement_bonus = 0.0
+        if total_votes > 0:
+            majority_ratio = max(block_votes, accept_votes) / total_votes
+            if majority_ratio >= 0.75:
+                agreement_bonus = 10.0
+
+        adjusted_score = base_score - penalty + evidence_bonus + ioc_bonus + rag_bonus + agreement_bonus
+        adjusted_score = min(max(adjusted_score, 0.0), 100.0)
+
+        # Calculate False Positive Risk
+        final_decision = result.get("final_response") or "UNKNOWN"
+        if isinstance(final_decision, dict):
+            final_decision = final_decision.get("conclusion", "UNKNOWN")
+        final_decision_str = str(final_decision).upper()
+
+        is_block = any(x in final_decision_str for x in ("BLOCK", "PHISH", "MALICIOUS", "MALWARE", "RANSOMWARE"))
+
+        fp_risk = "Low"
+        if is_block:
+            if adjusted_score >= 85.0 and contradiction_count == 0:
+                fp_risk = "Low"
+            elif adjusted_score >= 60.0 or contradiction_count <= 1:
+                fp_risk = "Medium"
+            else:
+                fp_risk = "High"
+        else:
+            fp_risk = "Low"
+
+        result["global_score"] = adjusted_score
+        result["confidence_level"] = "High" if adjusted_score >= 80.0 else "Medium" if adjusted_score >= 50.0 else "Low"
+        result["false_positive_risk"] = fp_risk
         result["agreements"] = _agreement_points(analyses)
         result["disagreements"] = contradictions
+        result["unified_evidence"] = unified_evidence
+        result["unified_iocs"] = dedup_iocs
+        result["rag_count"] = rag_count
+        result["mitre_techs"] = mitre_techs
+
         return result
 
 
