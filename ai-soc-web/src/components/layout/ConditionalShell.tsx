@@ -5,7 +5,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 
 /** Routes that should NOT render the dashboard chrome. */
-const BARE_ROUTES = ["/login"];
+const BARE_ROUTES = ["/login", "/sentinel"];
 
 export function ConditionalShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

@@ -15,6 +15,7 @@ import {
   Layers,
   TrendingUp,
   UsersRound,
+  Radar,
 } from "lucide-react";
 
 const nav = [
@@ -27,6 +28,7 @@ const nav = [
   { href: "/batch", label: "Batch Evaluation", icon: Boxes },
   { href: "/gpu", label: "GPU Observatory", icon: Cpu },
   { href: "/governance", label: "AI Governance", icon: Scale },
+  { href: "/sentinel", label: "Sentinel Command", icon: Radar },
 ];
 
 export function Sidebar() {

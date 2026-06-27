@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+<!-- STITCH_THREEJS_START:ANIMATION_35 class="fixed inset-0 w-full h-full bg-transparent" -->
+<div class="fixed inset-0 w-full h-full bg-transparent" style="display:block;">
+<script src="https://ajax.googleapis.com/ajax/libs/threejs/r125/three.min.js"></script>
+<div id="threejs-container-ANIMATION_35" style="width:100%;height:100%"></div>
+<script>
+(function() {
+  const container = document.getElementById('threejs-container-ANIMATION_35');
+  const devicePixelRatio = window.devicePixelRatio || 1;
+  const scene = new THREE.Scene();
+const width = container.clientWidth || window.innerWidth;
+const height = container.clientHeight || window.innerHeight;
+const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+renderer.setSize(width, height);
+container.appendChild(renderer.domElement);
+
+// Group to hold our network nodes
+const networkGroup = new THREE.Group();
+scene.add(networkGroup);
+
+// Materials
+const nodeMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x00d1ff, 
+    emissive: 0x00d1ff, 
+    emissiveIntensity: 0.5,
+    transparent: true,
+    opacity: 0.8
+});
+
+const lineMaterial = new THREE.LineBasicMaterial({ 
+    color: 0x00d1ff, 
+    transparent: true, 
+    opacity: 0.2 
+});
+
+// Create Nodes (Master AI + Agents)
+const nodes = [];
+const nodeCount = 8;
+for (let i = 0; i < nodeCount; i++) {
+    const geometry = new THREE.SphereGeometry(i === 0 ? 0.8 : 0.4, 32, 32);
+    const node = new THREE.Mesh(geometry, nodeMaterial.clone());
+    
+    // Position nodes in a semi-random 3D cluster
+    node.position.set(
+        (Math.random() - 0.5) * 10,
+        (Math.random() - 0.5) * 6,
+        (Math.random() - 0.5) * 4
+    );
+    
+    node.userData = {
+        originalPos: node.position.clone(),
+        phase: Math.random() * Math.PI * 2
+    };
+    
+    nodes.push(node);
+    networkGroup.add(node);
+}
+
+// Create Lines between nodes (connections)
+const lines = [];
+for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+        if (Math.random() > 0.6) {
+            const geometry = new THREE.BufferGeometry().setFromPoints([
+                nodes[i].position,
+                nodes[j].position
+            ]);
+            const line = new THREE.Line(geometry, lineMaterial);
+            lines.push({ line, start: nodes[i], end: nodes[j] });
+            networkGroup.add(line);
+        }
+    }
+}
+
+// Lighting
+const ambientLight = new THREE.AmbientLight(0x404040);
+scene.add(ambientLight);
+const pointLight = new THREE.PointLight(0x00d1ff, 1, 100);
+pointLight.position.set(10, 10, 10);
+scene.add(pointLight);
+
+camera.position.z = 12;
+
+function animate() {
+    requestAnimationFrame(animate);
+    
+    const time = Date.now() * 0.001;
+    
+    // Animate nodes (subtle floating)
+    nodes.forEach((node, i) => {
+        node.position.y = node.userData.originalPos.y + Math.sin(time + node.userData.phase) * 0.3;
+        node.position.x = node.userData.originalPos.x + Math.cos(time + node.userData.phase * 0.7) * 0.2;
+        
+        // Pulse the Master AI (node 0)
+        if (i === 0) {
+            const pulse = 1.0 + Math.sin(time * 3.0) * 0.1;
+            node.scale.set(pulse, pulse, pulse);
+        }
+    });
+    
+    // Update line geometries
+    lines.forEach(l => {
+        const positions = l.line.geometry.attributes.position.array;
+        positions[0] = l.start.position.x;
+        positions[1] = l.start.position.y;
+        positions[2] = l.start.position.z;
+        positions[3] = l.end.position.x;
+        positions[4] = l.end.position.y;
+        positions[5] = l.end.position.z;
+        l.line.geometry.attributes.position.needsUpdate = true;
+    });
+    
+    networkGroup.rotation.y += 0.002;
+    renderer.render(scene, camera);
+}
+
+animate();
+
+window.addEventListener('resize', () => {
+    const w = container.clientWidth || window.innerWidth;
+    const h = container.clientHeight || window.innerHeight;
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+});
+})();
+</script>
+</div>
+<!-- STITCH_THREEJS_END:ANIMATION_35 -->
+</body>
+</html>
