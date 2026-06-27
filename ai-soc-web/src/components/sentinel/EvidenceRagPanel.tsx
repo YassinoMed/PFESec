@@ -35,12 +35,12 @@ export function EvidenceRagPanel({
   const active = tab === "rag" ? rag : tab === "ioc" ? ioc : mitre;
 
   return (
-    <section className="stitch-glass-panel flex h-[42%] flex-col overflow-hidden rounded-xl">
-      {/* Onglets */}
+    <section className="stitch-glass-panel stitch-animate-in stitch-delay-300 flex flex-[1] flex-col overflow-hidden rounded-xl">
+      {/* Onglets — bg-surface-container-highest/60 comme le design */}
       <div
         className="sentinel-caps flex border-b"
         style={{
-          backgroundColor: "rgba(51, 52, 62, 0.8)",
+          backgroundColor: "rgba(51, 52, 62, 0.6)",
           borderColor: "rgba(60, 73, 78, 0.3)",
         }}
       >
@@ -58,7 +58,7 @@ export function EvidenceRagPanel({
                 borderBottom: isActive
                   ? "2px solid var(--stitch-tertiary)"
                   : "2px solid transparent",
-                backgroundColor: isActive ? "rgba(56, 56, 67, 0.5)" : "transparent",
+                backgroundColor: isActive ? "rgba(56, 56, 67, 0.4)" : "transparent",
               }}
             >
               {t.label}
@@ -67,34 +67,38 @@ export function EvidenceRagPanel({
         })}
       </div>
 
-      {/* Liste des preuves */}
-      <div className="sentinel-scroll flex flex-col gap-2 overflow-y-auto p-5">
+      {/* Liste des preuves — backdrop-blur-sm + font-code-sm comme le design */}
+      <div
+        className="stitch-panel-body sentinel-scroll flex flex-col gap-2 overflow-y-auto"
+        style={{
+          fontFamily: "var(--font-fira), 'JetBrains Mono', ui-monospace, monospace",
+          fontSize: "12px",
+          lineHeight: "1.4",
+        }}
+      >
         {active.map((e, i) => (
           <div
             key={i}
-            className="rounded p-2"
+            className="stitch-glass-micro rounded p-2"
             style={{
               borderLeft: `2px solid ${toneColor[e.tone]}`,
               backgroundColor: "rgba(51, 52, 62, 0.3)",
             }}
           >
-            <span className="sentinel-mono text-xs font-bold" style={{ color: toneColor[e.tone] }}>
+            <span className="font-bold" style={{ color: toneColor[e.tone] }}>
               {e.source}:
             </span>{" "}
-            <span
-              className="sentinel-mono text-xs"
-              style={{ color: "var(--stitch-on-surface)" }}
-            >
+            <span style={{ color: "var(--stitch-on-surface)" }}>
               {e.text}
             </span>
           </div>
         ))}
         {active.length === 0 && (
           <div
-            className="sentinel-mono py-6 text-center text-xs"
+            className="py-6 text-center"
             style={{ color: "var(--stitch-on-surface-variant)" }}
           >
-            Aucune preuve disponible pour cet onglet.
+            No evidence available for this tab.
           </div>
         )}
       </div>

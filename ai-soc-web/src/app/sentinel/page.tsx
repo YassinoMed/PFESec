@@ -19,12 +19,19 @@ import {
   EvidenceRagPanel,
   type Evidence,
 } from "@/components/sentinel/EvidenceRagPanel";
+import { DecisionJournal } from "@/components/sentinel/DecisionJournal";
 import type { ConsoleMessage } from "@/components/council/LiveMessageConsole";
-import { Crosshair } from "lucide-react";
+import {
+  Crosshair,
+  Terminal,
+  FlaskConical,
+  LayoutGrid,
+  Scale,
+} from "lucide-react";
 
 const now = () => new Date().toLocaleTimeString("en-GB");
 
-// Séquence de simulation (inspirée du design Stitch + données réalistes)
+// ─── Simulation scenario (fidèle au design Stitch) ───
 type SimStep = {
   speaker: string;
   content: string;
@@ -129,6 +136,14 @@ const MITRE_MAP: Evidence[] = [
   },
 ];
 
+// ─── Bottom Nav mobile items ───
+const MOBILE_NAV = [
+  { icon: Terminal, active: true },
+  { icon: FlaskConical, active: false },
+  { icon: LayoutGrid, active: false },
+  { icon: Scale, active: false },
+];
+
 export default function SentinelPage() {
   const [view, setView] = useState<SentinelView>("orchestrator");
   const [messages, setMessages] = useState<ConsoleMessage[]>([]);
@@ -164,9 +179,12 @@ export default function SentinelPage() {
     });
 
     SCENARIO.forEach((step, idx) => {
-      // Indicateur de frappe avant le message
       const typingTimer = setTimeout(() => {
-        setTyping(step.speaker.replace(/^[^\sa-zA-Z]+/, "").trim());
+        setTyping(
+          step.speaker
+            .replace(/^[\p{Emoji}\s]+/u, "")
+            .trim()
+        );
       }, idx * 2200);
       timers.current.push(typingTimer);
 
@@ -219,6 +237,8 @@ export default function SentinelPage() {
     });
   };
 
+  const hasResult = messages.length > 0;
+
   return (
     <>
       <SentinelHeader
@@ -229,54 +249,76 @@ export default function SentinelPage() {
       />
       <SentinelSidebar active={view} onSelect={setView} />
 
-      {/* Zone principale */}
+      {/* ─── Main Content Area (exact du design) ─── */}
       <main
-        className="relative mt-16 flex h-[calc(100vh-4rem)] flex-col gap-6 p-6 lg:ml-64"
-        style={{ overflow: "hidden" }}
+        className="relative flex flex-1 flex-col gap-6 overflow-hidden p-6 md:flex-row md:ml-64 md:mt-16 md:h-[calc(100vh-4rem)]"
       >
-        {/* Bouton de lancement / zone d'action flottante quand idle */}
-        {messages.length === 0 && (
-          <div className="stitch-fade-in flex items-center justify-center pt-10">
-            <button
-              onClick={runScenario}
-              className="stitch-glow-active flex items-center gap-3 rounded-lg border px-8 py-4 transition-all hover:brightness-125"
-              style={{
-                borderColor: "rgba(0, 209, 255, 0.4)",
-                backgroundColor: "rgba(0, 209, 255, 0.08)",
-                color: "var(--stitch-primary)",
-              }}
-            >
-              <Crosshair size={20} />
-              <span className="sentinel-caps text-sm">
-                Initiate Threat Analysis
-              </span>
-            </button>
-          </div>
-        )}
+        {/* Left Panel: Orchestrator Control */}
+        <OrchestratorControlPanel
+          state={orch}
+          onPause={handlePause}
+          onRestart={handleRestart}
+        />
 
-        {/* Grille 3 colonnes des panneaux */}
-        <div className="flex min-h-0 flex-1 flex-col gap-6 md:flex-row">
-          {/* Gauche : Orchestrator Control */}
-          <OrchestratorControlPanel
-            state={orch}
-            onPause={handlePause}
-            onRestart={handleRestart}
+        {/* Center Panel: Live Agent Feed */}
+        <LiveAgentFeed messages={messages} typing={typing} />
+
+        {/* Right Panel: Consensus + Journal + Evidence */}
+        <div className="flex min-h-0 flex-[1.5] flex-col gap-6">
+          {/* Consensus Engine */}
+          <ConsensusEnginePanel stability={consensus} votes={INITIAL_VOTES} />
+
+          {/* Decision Journal — panneau du design Stitch */}
+          <DecisionJournal
+            title="Phishing Analysis"
+            summary="High probability of a targeted credential harvesting attack."
+            details="Payload exhibits sophisticated evasion techniques. Sender domains show recent fast-flux behavior. Recommend immediate quarantine of affected endpoints and reset of compromised credentials."
           />
 
-          {/* Centre : Live Agent Feed */}
-          <LiveAgentFeed messages={messages} typing={typing} />
-
-          {/* Droite : Consensus + Evidence */}
-          <div className="flex min-h-0 flex-[1.5] flex-col gap-6">
-            <ConsensusEnginePanel stability={consensus} votes={INITIAL_VOTES} />
-            <EvidenceRagPanel
-              rag={RAG_SOURCES}
-              ioc={IOC_EXTRACT}
-              mitre={MITRE_MAP}
-            />
-          </div>
+          {/* Evidence & RAG */}
+          <EvidenceRagPanel
+            rag={RAG_SOURCES}
+            ioc={IOC_EXTRACT}
+            mitre={MITRE_MAP}
+          />
         </div>
       </main>
+
+      {/* Bouton d'initialisation flottant quand idle */}
+      {!hasResult && (
+        <div className="stitch-fade-in fixed inset-0 z-30 flex items-center justify-center md:ml-64 md:mt-16">
+          <button
+            onClick={runScenario}
+            className="stitch-glow-active flex items-center gap-3 rounded-lg border px-8 py-4 transition-all hover:brightness-125"
+            style={{
+              borderColor: "rgba(0, 209, 255, 0.4)",
+              backgroundColor: "rgba(0, 209, 255, 0.08)",
+              color: "var(--stitch-primary)",
+            }}
+          >
+            <Crosshair size={20} />
+            <span className="sentinel-caps" style={{ fontSize: "13px" }}>
+              Initiate Threat Analysis
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* ─── Bottom NavBar (Mobile only — exact du design) ─── */}
+      <nav className="stitch-bottom-nav">
+        {MOBILE_NAV.map(({ icon: Icon, active: isActive }, i) => (
+          <div
+            key={i}
+            className="flex flex-col items-center gap-1 cursor-pointer transition-transform"
+            style={{
+              color: isActive ? "var(--stitch-tertiary)" : "var(--stitch-on-surface-variant)",
+              transform: isActive ? "scale(0.98)" : "none",
+            }}
+          >
+            <Icon size={20} />
+          </div>
+        ))}
+      </nav>
     </>
   );
 }

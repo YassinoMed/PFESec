@@ -12,24 +12,18 @@ export function ConsensusEnginePanel({
   stability: number; // 0..100
   votes: Vote[];
 }) {
-  // Géométrie de la jauge circulaire
-  const size = 128;
+  // Géométrie de la jauge — w-28 h-28 (112px) du design Stitch
+  const size = 112;
   const stroke = 4;
-  const r = 56;
+  const r = 48;
   const c = 2 * Math.PI * r;
   const offset = c - (stability / 100) * c;
 
   return (
-    <section className="stitch-glass-panel flex flex-1 flex-col overflow-hidden rounded-xl">
+    <section className="stitch-glass-panel stitch-animate-in stitch-delay-300 flex flex-[1.2] flex-col overflow-hidden rounded-xl">
       {/* Header */}
-      <div
-        className="border-b px-5 py-4"
-        style={{
-          backgroundColor: "rgba(40, 41, 51, 0.5)",
-          borderColor: "rgba(60, 73, 78, 0.3)",
-        }}
-      >
-        <h2 className="flex items-center gap-2 text-lg font-semibold">
+      <div className="stitch-panel-header">
+        <h2 className="sentinel-headline flex items-center gap-2">
           <span style={{ color: "var(--stitch-secondary)" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
@@ -44,15 +38,15 @@ export function ConsensusEnginePanel({
         </h2>
       </div>
 
-      <div className="flex flex-1 flex-col gap-4 p-5">
-        {/* Jauge circulaire STABILITY */}
-        <div className="flex items-center justify-center py-4">
+      <div className="stitch-panel-body sentinel-scroll flex flex-1 flex-col gap-4 overflow-y-auto">
+        {/* Jauge circulaire STABILITY — exact du design */}
+        <div className="flex items-center justify-center py-2">
           <div
             className="relative flex items-center justify-center rounded-full border-4"
             style={{
               width: size,
               height: size,
-              borderColor: "var(--stitch-container-highest)",
+              borderColor: "rgba(51, 52, 62, 0.5)",
               boxShadow: "inset 0 0 20px rgba(0,0,0,0.5)",
             }}
           >
@@ -74,9 +68,18 @@ export function ConsensusEnginePanel({
               />
             </svg>
             <div className="text-center">
-              <div className="text-3xl font-bold" style={{ color: "var(--stitch-on-surface)" }}>
+              <div
+                style={{
+                  fontFamily: "var(--font-inter), 'Inter', system-ui, sans-serif",
+                  fontSize: "32px",
+                  fontWeight: 700,
+                  lineHeight: 1.2,
+                  letterSpacing: "-0.02em",
+                  color: "var(--stitch-on-surface)",
+                }}
+              >
                 {stability}
-                <span className="text-sm">%</span>
+                <span style={{ fontSize: "14px" }}>%</span>
               </div>
               <div
                 className="sentinel-caps"
@@ -88,7 +91,7 @@ export function ConsensusEnginePanel({
           </div>
         </div>
 
-        {/* Matrice de vote */}
+        {/* Voting Matrix — backdrop-blur-sm sur chaque row */}
         <div className="mt-2 flex flex-col gap-2">
           {votes.map((vote, i) => (
             <VoteRow key={i} vote={vote} />
@@ -106,7 +109,7 @@ const verdictStyle: Record<Vote["verdict"], { bg: string; color: string; border:
     border: "rgba(164, 230, 255, 0.3)",
   },
   UNCERTAIN: {
-    bg: "rgba(56, 56, 67, 1)",
+    bg: "rgba(56, 56, 67, 0.5)",
     color: "var(--stitch-on-surface-variant)",
     border: "rgba(60, 73, 78, 0.5)",
   },
@@ -121,13 +124,13 @@ function VoteRow({ vote }: { vote: Vote }) {
   const s = verdictStyle[vote.verdict];
   return (
     <div
-      className="flex items-center justify-between rounded border p-2"
+      className="stitch-glass-micro flex items-center justify-between rounded border p-2"
       style={{
         backgroundColor: "rgba(51, 52, 62, 0.4)",
         borderColor: "rgba(60, 73, 78, 0.2)",
       }}
     >
-      <span className="sentinel-mono text-sm" style={{ color: "var(--stitch-on-surface)" }}>
+      <span className="sentinel-mono" style={{ color: "var(--stitch-on-surface)" }}>
         {vote.expert}
       </span>
       <span

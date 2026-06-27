@@ -21,16 +21,12 @@ export function OrchestratorControlPanel({
   const isCritical = state.confidence >= 80;
 
   return (
-    <section className="stitch-glass-panel flex max-w-sm flex-1 flex-col overflow-hidden rounded-xl">
+    <section className="stitch-glass-panel stitch-animate-in stitch-delay-100 relative z-10 flex max-w-sm flex-1 flex-col overflow-hidden rounded-xl">
       {/* Header */}
       <div
-        className="flex items-center justify-between border-b px-5 py-4"
-        style={{
-          backgroundColor: "rgba(40, 41, 51, 0.5)",
-          borderColor: "rgba(60, 73, 78, 0.3)",
-        }}
+        className="stitch-panel-header flex items-center justify-between"
       >
-        <h2 className="flex items-center gap-2 text-lg font-semibold">
+        <h2 className="sentinel-headline flex items-center gap-2">
           <span style={{ color: "var(--stitch-primary)" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
@@ -51,12 +47,12 @@ export function OrchestratorControlPanel({
       </div>
 
       {/* Body */}
-      <div className="sentinel-scroll flex flex-1 flex-col gap-4 overflow-y-auto p-5">
-        {/* Statut courant */}
+      <div className="stitch-panel-body sentinel-scroll flex flex-1 flex-col gap-4 overflow-y-auto">
+        {/* CURRENT STATUS */}
         <div
           className="rounded-lg border p-4"
           style={{
-            backgroundColor: "rgba(56, 56, 67, 0.5)",
+            backgroundColor: "rgba(56, 56, 67, 0.4)",
             borderColor: "rgba(60, 73, 78, 0.5)",
           }}
         >
@@ -67,21 +63,24 @@ export function OrchestratorControlPanel({
             Current Status
           </div>
           <div
-            className="sentinel-mono flex items-center gap-2 text-sm font-medium"
+            className="sentinel-mono flex items-center gap-2"
             style={{ color: "var(--stitch-primary)" }}
           >
-            <RefreshCw size={16} className={state.status === "ORCHESTRATING" ? "animate-spin" : ""} />
+            <RefreshCw
+              size={16}
+              className={state.status === "ORCHESTRATING" ? "animate-spin" : ""}
+            />
             {state.status}
           </div>
         </div>
 
-        {/* Classification de la menace */}
+        {/* CLASSIFICATION — glow critical quand menace élevée */}
         <div
           className={`rounded-lg border p-4 ${
             isCritical ? "stitch-glow-critical" : ""
           }`}
           style={{
-            backgroundColor: "rgba(147, 0, 10, 0.1)",
+            backgroundColor: "rgba(147, 0, 10, 0.2)",
             borderColor: "rgba(255, 180, 171, 0.3)",
           }}
         >
@@ -93,19 +92,26 @@ export function OrchestratorControlPanel({
           </div>
           <div
             className="text-base font-semibold"
-            style={{ color: "var(--stitch-error)" }}
+            style={{
+              color: isCritical ? "var(--stitch-error)" : "var(--stitch-on-surface)",
+              fontSize: "16px",
+              lineHeight: "1.6",
+            }}
           >
             {state.classification}
           </div>
           <div
-            className="mt-1 text-xs"
-            style={{ color: "var(--stitch-on-surface-variant)" }}
+            className="mt-1"
+            style={{
+              color: "var(--stitch-on-surface-variant)",
+              fontSize: "12px",
+            }}
           >
             Confidence Score: {state.confidence}%
           </div>
         </div>
 
-        {/* Barre de progression analyse */}
+        {/* ANALYSIS PROGRESS — gradient violet→cyan avec glow */}
         <div className="mt-4">
           <div className="sentinel-caps mb-2 flex justify-between">
             <span style={{ color: "var(--stitch-on-surface-variant)" }}>
@@ -164,11 +170,17 @@ function ControlButton({
   return (
     <button
       onClick={onClick}
-      className="sentinel-caps flex items-center justify-center gap-1 rounded border px-3 py-2 transition-colors hover:brightness-125"
+      className="sentinel-caps flex items-center justify-center gap-1 rounded border px-3 py-2 transition-colors"
       style={{
-        backgroundColor: "var(--stitch-container-highest)",
+        backgroundColor: "rgba(51, 52, 62, 0.6)",
         borderColor: "rgba(60, 73, 78, 0.5)",
         color: "var(--stitch-on-surface)",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = "rgba(56, 56, 67, 0.8)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = "rgba(51, 52, 62, 0.6)";
       }}
     >
       {icon}

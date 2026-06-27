@@ -20,6 +20,17 @@ const speakerBorder: Record<string, string> = {
   "🗺️": "rgba(255, 209, 102, 0.3)",
 };
 
+/** Extrait le nom du speaker sans l'emoji */
+const speakerName = (raw: string): string => {
+  return raw.replace(/^[\p{Emoji}\s]+/u, "").trim() || raw;
+};
+
+/** Extrait l'emoji (premier caractère si emoji, sinon premier char) */
+const speakerEmoji = (raw: string): string => {
+  const match = raw.match(/^(\p{Emoji})/u);
+  return match ? match[1] : raw.charAt(0);
+};
+
 export function LiveAgentFeed({
   messages,
   typing,
@@ -29,7 +40,6 @@ export function LiveAgentFeed({
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll vers le bas à chaque nouveau message
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -37,16 +47,12 @@ export function LiveAgentFeed({
   }, [messages, typing]);
 
   return (
-    <section className="stitch-glass-panel relative z-10 flex flex-[2] flex-col overflow-hidden rounded-xl">
+    <section className="stitch-glass-panel stitch-animate-in stitch-delay-200 relative z-10 flex flex-[2] flex-col overflow-hidden rounded-xl">
       {/* Header */}
       <div
-        className="flex items-center justify-between border-b px-5 py-4"
-        style={{
-          backgroundColor: "rgba(40, 41, 51, 0.5)",
-          borderColor: "rgba(60, 73, 78, 0.3)",
-        }}
+        className="stitch-panel-header flex items-center justify-between relative z-10"
       >
-        <h2 className="flex items-center gap-2 text-lg font-semibold">
+        <h2 className="sentinel-headline flex items-center gap-2">
           <span style={{ color: "var(--stitch-tertiary)" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
@@ -69,65 +75,83 @@ export function LiveAgentFeed({
         </div>
       </div>
 
-      {/* Messages */}
+      {/* Messages — font-code-sm (12px mono) comme le design */}
       <div
         ref={scrollRef}
-        className="sentinel-scroll flex flex-1 flex-col gap-4 overflow-y-auto p-5"
+        className="stitch-panel-body sentinel-scroll relative z-10 flex flex-1 flex-col gap-4 overflow-y-auto"
+        style={{ fontFamily: "var(--font-fira), 'JetBrains Mono', ui-monospace, monospace", fontSize: "12px", lineHeight: "1.4" }}
       >
         {messages.length === 0 && (
           <div className="flex flex-1 flex-col items-center justify-center text-center">
             <span
-              className="stitch-pulse-dot text-sm"
-              style={{ color: "var(--stitch-on-surface-variant)" }}
+              className="stitch-pulse-dot"
+              style={{
+                color: "var(--stitch-on-surface-variant)",
+                fontSize: "12px",
+              }}
             >
-              ◌ En attente d'un incident à analyser...
+              ◌ Waiting for incident submission...
+            </span>
+            <span
+              className="mt-1"
+              style={{
+                color: "var(--stitch-on-surface-variant)",
+                fontSize: "10px",
+                opacity: 0.6,
+              }}
+            >
+              Submit an incident to see the council deliberate live.
             </span>
           </div>
         )}
 
         {messages.map((msg, i) => {
-          const speakerKey = msg.speaker.trim().charAt(0);
-          const color = speakerColor[speakerKey] ?? "var(--stitch-on-surface)";
-          const border = speakerBorder[speakerKey] ?? "rgba(133, 147, 153, 0.3)";
+          const emoji = speakerEmoji(msg.speaker);
+          const name = speakerName(msg.speaker);
+          const color = speakerColor[emoji] ?? "var(--stitch-on-surface)";
+          const border = speakerBorder[emoji] ?? "rgba(133, 147, 153, 0.3)";
           return (
             <div key={i} className="stitch-fade-in flex gap-3">
-              {/* Avatar emoji */}
+              {/* Avatar avec backdrop-blur-sm */}
               <div
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded border"
+                className="stitch-glass-micro flex h-8 w-8 shrink-0 items-center justify-center rounded border"
                 style={{
-                  backgroundColor: "var(--stitch-container-highest)",
+                  backgroundColor: "rgba(51, 52, 62, 0.8)",
                   borderColor: border,
                 }}
               >
-                <span className="text-base">{speakerKey}</span>
+                <span style={{ fontSize: "16px" }}>{emoji}</span>
               </div>
 
-              {/* Bulle */}
+              {/* Bulle avec backdrop-blur-md */}
               <div
-                className="max-w-[85%] rounded-r-lg rounded-bl-lg border p-3"
+                className="stitch-glass-micro max-w-[85%] rounded-r-lg rounded-bl-lg border p-3"
                 style={{
-                  backgroundColor: "rgba(51, 52, 62, 0.6)",
+                  backgroundColor: "rgba(51, 52, 62, 0.5)",
                   borderColor: "rgba(60, 73, 78, 0.2)",
                 }}
               >
                 <div className="mb-1 flex items-center gap-2">
                   <span
-                    className="sentinel-mono text-xs font-bold"
-                    style={{ color }}
+                    className="sentinel-mono"
+                    style={{
+                      color,
+                      fontWeight: 700,
+                      fontSize: "14px",
+                    }}
                   >
-                    {msg.speaker.replace(/^[^\sa-zA-Z]+/, "").trim() || msg.speaker}
+                    {name}
                   </span>
                   <span
-                    className="sentinel-mono text-[10px]"
-                    style={{ color: "var(--stitch-on-surface-variant)" }}
+                    style={{
+                      color: "var(--stitch-on-surface-variant)",
+                      fontSize: "10px",
+                    }}
                   >
                     {msg.time}
                   </span>
                 </div>
-                <div
-                  className="text-xs leading-relaxed"
-                  style={{ color: "var(--stitch-on-surface)" }}
-                >
+                <div style={{ color: "var(--stitch-on-surface)" }}>
                   {msg.content}
                 </div>
               </div>
@@ -135,28 +159,39 @@ export function LiveAgentFeed({
           );
         })}
 
-        {/* Indicateur de saisie */}
+        {/* Typing indicator — bulle avec dots animés (exact du design) */}
         {typing && (
-          <div className="stitch-fade-in flex gap-3">
+          <div className="stitch-fade-in flex gap-3 mt-2">
             <div
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded border"
+              className="stitch-glass-micro flex h-8 w-8 shrink-0 items-center justify-center rounded border"
               style={{
-                backgroundColor: "var(--stitch-container-highest)",
+                backgroundColor: "rgba(51, 52, 62, 0.8)",
                 borderColor: "rgba(60, 73, 78, 0.3)",
               }}
             >
               <span
                 className="stitch-pulse-dot"
-                style={{ color: "var(--stitch-on-surface-variant)" }}
+                style={{ color: "var(--stitch-tertiary)", fontSize: "16px" }}
               >
-                •••
+                ⋮
               </span>
             </div>
             <div
-              className="text-xs italic"
-              style={{ color: "var(--stitch-on-surface-variant)" }}
+              className="stitch-glass-micro flex items-center gap-2 rounded-r-lg rounded-bl-lg border px-3 py-1.5"
+              style={{
+                backgroundColor: "rgba(51, 52, 62, 0.3)",
+                borderColor: "rgba(60, 73, 78, 0.1)",
+                color: "var(--stitch-on-surface-variant)",
+                fontSize: "12px",
+                fontStyle: "italic",
+              }}
             >
-              {typing} is analyzing...
+              {typing} is analyzing
+              <span className="stitch-typing-dots">
+                <span className="stitch-typing-dot" />
+                <span className="stitch-typing-dot" />
+                <span className="stitch-typing-dot" />
+              </span>
             </div>
           </div>
         )}

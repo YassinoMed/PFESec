@@ -24,9 +24,10 @@ export function SentinelHeader({
 }: SentinelHeaderProps) {
   return (
     <header
-      className="fixed top-0 z-50 flex h-16 w-full items-center justify-between border-b px-5"
+      className="stitch-animate-in fixed top-0 z-50 flex h-16 w-full items-center justify-between border-b"
       style={{
-        backgroundColor: "rgba(26, 27, 36, 0.8)",
+        padding: "0 20px",
+        backgroundColor: "rgba(26, 27, 36, 0.6)",
         backdropFilter: "blur(12px)",
         borderColor: "rgba(0, 209, 255, 0.2)",
         boxShadow: "0 0 15px rgba(0,209,255,0.15)",
@@ -34,29 +35,37 @@ export function SentinelHeader({
     >
       {/* Brand + indicateurs globaux */}
       <div className="flex items-center gap-6">
+        {/* Titre principal — font-headline-md (24px, 600, Inter) */}
         <h1
-          className="sentinel-caps text-lg"
-          style={{ color: "var(--stitch-primary)", letterSpacing: "-0.01em" }}
+          className="sentinel-headline-md uppercase"
+          style={{
+            color: "var(--stitch-primary)",
+            letterSpacing: "-0.03em",
+          }}
         >
-          ◈ SENTINEL COMMAND
+          SENTINEL COMMAND
         </h1>
 
-        <div className="hidden h-8 items-center gap-4 border-l pl-6 md:flex"
-          style={{ borderColor: "rgba(60, 73, 78, 0.4)" }}
+        {/* Global Status Indicators */}
+        <div
+          className="hidden h-8 items-center gap-4 border-l pl-6 md:flex"
+          style={{ borderColor: "rgba(60, 73, 78, 0.3)" }}
         >
-          <Indicator label="Session" value={session} mono />
-          <Indicator
+          <HeaderIndicator label="Session" value={session} />
+          <HeaderIndicator
             label="Risk"
             value={risk}
-            mono
-            valueColor={riskColor[risk]}
             chip
+            chipColor={riskColor[risk]}
           />
-          <Indicator label="Consensus" value={`${consensus}%`} mono valueColor="var(--stitch-primary)" />
-          <Indicator
+          <HeaderIndicator
+            label="Consensus"
+            value={`${consensus}%`}
+            valueColor="var(--stitch-primary)"
+          />
+          <HeaderIndicator
             label="Agents"
             value={`${agents} ACTIVE`}
-            mono
             valueColor="var(--stitch-tertiary)"
           />
         </div>
@@ -64,15 +73,27 @@ export function SentinelHeader({
 
       {/* Actions */}
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-3" style={{ color: "var(--stitch-primary)" }}>
-          <Shield size={18} className="cursor-pointer transition-colors hover:opacity-70" />
-          <BellRing size={18} className="cursor-pointer transition-colors hover:opacity-70" />
-          <Settings size={18} className="cursor-pointer transition-colors hover:opacity-70" />
+        <div
+          className="flex items-center gap-2"
+          style={{ color: "var(--stitch-primary)" }}
+        >
+          <Shield
+            size={18}
+            className="cursor-pointer transition-colors hover:opacity-70"
+          />
+          <BellRing
+            size={18}
+            className="cursor-pointer transition-colors hover:opacity-70"
+          />
+          <Settings
+            size={18}
+            className="cursor-pointer transition-colors hover:opacity-70"
+          />
         </div>
         <button
           className="sentinel-caps flex items-center gap-2 rounded px-4 py-2 transition-all hover:brightness-110"
           style={{
-            color: "#690005",
+            color: "var(--stitch-on-error)",
             backgroundColor: "rgba(255, 180, 171, 0.9)",
             boxShadow: "0 0 10px rgba(255,180,171,0.2)",
           }}
@@ -85,17 +106,18 @@ export function SentinelHeader({
   );
 }
 
-function Indicator({
+/* Indicateur de statut dans le header — fidèle au design Stitch */
+function HeaderIndicator({
   label,
   value,
-  mono,
   chip,
+  chipColor,
   valueColor,
 }: {
   label: string;
   value: string;
-  mono?: boolean;
   chip?: boolean;
+  chipColor?: string;
   valueColor?: string;
 }) {
   return (
@@ -110,7 +132,7 @@ function Indicator({
         <span
           className="sentinel-caps rounded px-2 py-1"
           style={{
-            color: valueColor,
+            color: chipColor ?? "var(--stitch-error)",
             backgroundColor: "rgba(147, 0, 10, 0.2)",
           }}
         >
@@ -118,8 +140,11 @@ function Indicator({
         </span>
       ) : (
         <span
-          className={mono ? "sentinel-mono text-sm font-medium" : "text-sm font-semibold"}
-          style={{ color: valueColor ?? "var(--stitch-on-surface)" }}
+          className="sentinel-mono"
+          style={{
+            color: valueColor ?? "var(--stitch-on-surface)",
+            fontSize: "14px",
+          }}
         >
           {value}
         </span>

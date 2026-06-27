@@ -3,6 +3,7 @@
  *
  * Palette deep-space navy + accents néon (cyan / violet).
  * Tokens locaux (--stitch-*) pour ne PAS impacter les autres pages.
+ * Typographie : Inter (headings/body) + JetBrains Mono (data/labels).
  */
 
 :root {
@@ -35,24 +36,31 @@
   /* Status */
   --stitch-error: #ffb4ab;
   --stitch-error-container: #93000a;
+  --stitch-on-error: #690005;
   --stitch-success: #7ef0b8;
   --stitch-warning: #ffd166;
 }
 
-/* Conteneur racine de la page Sentinel */
+/* ─────────── Conteneur racine ─────────── */
 .sentinel-root {
-  background-color: var(--stitch-bg);
+  background-color: transparent; /* allow shader to show */
   color: var(--stitch-on-surface);
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-inter), "Inter", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-/* Typo data : mono pour IP, logs, métriques */
+/* ─────────── Typographie Stitch ─────────── */
 .sentinel-mono {
-  font-family: var(--font-fira), ui-monospace, "JetBrains Mono", monospace;
+  font-family: var(--font-fira), "JetBrains Mono", ui-monospace, monospace;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
   letter-spacing: 0.02em;
 }
+
 .sentinel-caps {
-  font-family: var(--font-fira), ui-monospace, "JetBrains Mono", monospace;
+  font-family: var(--font-fira), "JetBrains Mono", ui-monospace, monospace;
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
@@ -60,17 +68,44 @@
   text-transform: uppercase;
 }
 
-/* ───────────── Glassmorphism ───────────── */
+.sentinel-headline {
+  font-family: var(--font-inter), "Inter", system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.sentinel-headline-md {
+  font-family: var(--font-inter), "Inter", system-ui, sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.sentinel-code {
+  font-family: var(--font-fira), "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* ─────────── Glassmorphism (immersive variant) ─────────── */
 .stitch-glass-panel {
-  background-color: rgba(26, 27, 36, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(133, 147, 153, 0.15);
+  background-color: rgba(26, 27, 36, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(133, 147, 153, 0.2);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-/* ───────────── Glows & états actifs ───────────── */
+/* Glass-micro pour les bulles de chat et petits éléments */
+.stitch-glass-micro {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ─────────── Glows & états actifs ─────────── */
 .stitch-glow-critical {
   box-shadow: 0 0 15px rgba(255, 180, 171, 0.3);
   border-color: rgba(255, 180, 171, 0.5);
@@ -81,21 +116,34 @@
 .stitch-glow-violet {
   box-shadow: 0 0 15px rgba(208, 188, 255, 0.25);
 }
+.stitch-glow-primary {
+  filter: drop-shadow(0 0 8px rgba(0, 209, 255, 0.8));
+}
 
+/* ─────────── Pulse dot (indicateurs live) ─────────── */
 .stitch-pulse-dot {
   animation: stitch-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 @keyframes stitch-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.45;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
 }
 
-/* Apparition douce des panneaux / messages */
+/* ─────────── Animations d'entrée staggered (du design Stitch) ─────────── */
+.stitch-animate-in {
+  animation: stitch-slide-in 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+  opacity: 0;
+}
+.stitch-delay-100 { animation-delay: 100ms; }
+.stitch-delay-200 { animation-delay: 200ms; }
+.stitch-delay-300 { animation-delay: 300ms; }
+
+@keyframes stitch-slide-in {
+  0% { opacity: 0; transform: translateY(1rem); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Apparition douce des messages individuels */
 .stitch-fade-in {
   animation: stitch-fade-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
@@ -110,7 +158,23 @@
   }
 }
 
-/* ───────────── Scrollbar néon ───────────── */
+/* ─────────── Typing dots (3 bouncing dots) ─────────── */
+.stitch-typing-dots {
+  display: flex;
+  gap: 4px;
+  margin-left: 4px;
+}
+.stitch-typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: rgba(150, 233, 255, 0.7);
+  animation: stitch-pulse 1.4s ease-in-out infinite;
+}
+.stitch-typing-dot:nth-child(2) { animation-delay: 75ms; }
+.stitch-typing-dot:nth-child(3) { animation-delay: 150ms; }
+
+/* ─────────── Scrollbar néon (exact du design) ─────────── */
 .sentinel-scroll::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -126,15 +190,49 @@
   background: rgba(164, 230, 255, 0.5);
 }
 
-/* Voile sombre derrière le shader pour garder la lisibilité */
+/* ─────────── Voile sombre derrière le shader ─────────── */
 .sentinel-shader-veil {
   position: fixed;
   inset: 0;
   z-index: -5;
   background: radial-gradient(
       circle at 50% 30%,
-      rgba(10, 11, 20, 0.2),
-      rgba(10, 11, 20, 0.78) 70%
+      rgba(10, 11, 20, 0.15),
+      rgba(10, 11, 20, 0.7) 70%
     ),
-    linear-gradient(180deg, rgba(10, 11, 20, 0.4), rgba(10, 11, 20, 0.85));
+    linear-gradient(180deg, rgba(10, 11, 20, 0.3), rgba(10, 11, 20, 0.8));
+}
+
+/* ─────────── Panel header (background subtil) ─────────── */
+.stitch-panel-header {
+  padding: 20px;
+  border-bottom: 1px solid rgba(60, 73, 78, 0.3);
+  background-color: rgba(40, 41, 51, 0.4);
+}
+
+/* ─────────── Panel body (padding standard) ─────────── */
+.stitch-panel-body {
+  padding: 20px;
+}
+
+/* ─────────── Bottom nav mobile ─────────── */
+.stitch-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  z-index: 50;
+  height: 48px;
+  display: none;
+  background-color: rgba(13, 14, 23, 0.8);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(150, 233, 255, 0.2);
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 32px;
+  box-shadow: 0 -5px 15px rgba(150, 233, 255, 0.1);
+}
+@media (max-width: 768px) {
+  .stitch-bottom-nav {
+    display: flex;
+  }
 }
