@@ -55,15 +55,6 @@ MODEL_REGISTRY: Dict[str, Dict[str, Any]] = {
         "task": "phishing",
         "icon": "🛡️",
     },
-    "secbert": {
-        "name": "SecBERT Classifier",
-        "type": "bert",
-        "path": OUTPUTS / "secbert-phishing",
-        "base_path": MODELS_DIR / "SecBERT",
-        "description": "SecBERT cybersécurité — classification phishing",
-        "task": "phishing",
-        "icon": "🔒",
-    },
     "phishsense": {
         "name": "Llama PhishSense (LoRA)",
         "type": "lora",
@@ -73,23 +64,23 @@ MODEL_REGISTRY: Dict[str, Dict[str, Any]] = {
         "task": "phishing",
         "icon": "🎣",
     },
-    "phishsense-merged": {
-        "name": "Llama PhishSense (Merged)",
+    "qwen2_5_1_5b": {
+        "name": "Qwen2.5-1.5B-Instruct",
         "type": "llm",
-        "path": OUTPUTS / "phishsense-merged",
-        "base_path": MODELS_DIR / "Llama-Phishsense-1B",
-        "description": "Llama 1B fusionné — inférence phishing directe",
-        "task": "phishing",
-        "icon": "🔍",
-    },
-    "securityllm": {
-        "name": "SecurityLLM (LoRA)",
-        "type": "lora",
-        "path": OUTPUTS / "securityllm-targeted-lora",
-        "base_path": MODELS_DIR / "SecurityLLM",
-        "description": "SecurityLLM + LoRA — analyse SOC & règles détection",
+        "path": OUTPUTS / "qwen2.5-1.5b",
+        "base_path": MODELS_DIR / "Qwen2.5-1.5B-Instruct",
+        "description": "LLM 1.5B — raisonnement de sécurité, synthèse et décision",
         "task": "soc",
         "icon": "🧠",
+    },
+    "smollm2_1_7b": {
+        "name": "SmolLM2-1.7B-Instruct",
+        "type": "llm",
+        "path": OUTPUTS / "smollm2-1.7b",
+        "base_path": MODELS_DIR / "SmolLM2-1.7B-Instruct",
+        "description": "LLM 1.7B — synthèse rapide d'alertes et playbooks",
+        "task": "soc",
+        "icon": "⚡",
     },
 }
 

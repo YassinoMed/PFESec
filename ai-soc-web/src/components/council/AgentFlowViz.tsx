@@ -13,14 +13,24 @@ interface AgentFlowVizProps {
 
 const anonymizeExpert = (id: string): string => {
   const map: Record<string, string> = {
-    cysecbert: "Expert 1",
-    secbert: "Expert 2",
-    phishsense: "Expert 3",
-    "phishsense-merged": "Expert 3",
-    securityllm: "Expert 4",
-    "securityllm-merged": "Expert 4",
-    security_rag: "Expert RAG",
-    rag: "Expert RAG",
+    cysecbert: "Expert Email (BERT)",
+    phishsense: "Expert Email (LLM)",
+    codebert: "Expert Web (Code)",
+    graphcodebert: "Expert Web (Graph)",
+    netbert: "Expert Réseau (BERT)",
+    flowtransformer: "Expert Réseau (Flow)",
+    malbert: "Expert Malware (BERT)",
+    malconv: "Expert Malware (CNN)",
+    attackbert: "Expert Threat Intel",
+    iocbert: "Expert IOC",
+    urlbert: "Expert URL (BERT)",
+    urlnet: "Expert URL (CNN)",
+    logbert: "Expert Logs (BERT)",
+    deeplog: "Expert Logs (LSTM)",
+    paddleocr: "Expert OCR",
+    trocr_small: "Expert OCR (Transformer)",
+    qwen2_5_1_5b: "Expert LLM (Qwen)",
+    smollm2_1_7b: "Expert LLM (Smol)",
   };
   if (id in map) return map[id];
   // Format virtual experts: phishing_expert -> Phishing Expert
@@ -119,7 +129,7 @@ export default function AgentFlowViz({
       {/* Node Row 2: Selected Experts */}
       <div className="relative z-10 flex w-full justify-around py-12">
         {experts.map((expert, index) => (
-          <div key={expert} className="flex flex-col items-center max-w-[90px] text-center">
+          <div key={`${expert}-${index}`} className="flex flex-col items-center max-w-[90px] text-center">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-[#161b22] text-secondary hover:border-primary/40 hover:text-primary transition-all duration-300">
               <Cpu size={16} />
             </div>

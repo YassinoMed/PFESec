@@ -26,12 +26,17 @@ export class BackendUnreachable extends Error {
   }
 }
 
-/** URL de base du backend d'inférence (lisible côté client via NEXT_PUBLIC_). */
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "";
+function getBackendUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+  if (envUrl) return envUrl.trim();
+  if (typeof window !== "undefined") {
+    return `${window.location.protocol}//${window.location.hostname}:8000`;
+  }
+  return "http://localhost:8000";
+}
 
 async function getJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const url = `${BACKEND_URL}${path}`;
+  const url = `${getBackendUrl()}${path}`;
   let res: Response;
   try {
     res = await fetch(url, {

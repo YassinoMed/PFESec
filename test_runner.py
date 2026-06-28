@@ -9,8 +9,8 @@ et génère un rapport JSON + console avec les résultats (pass/fail, métriques
 
 Usage :
     python test_runner.py --test-file tests/test_phishing_emails.txt --model cysecbert --report
-    python test_runner.py --test-file tests/test_bert_robustness.txt --model secbert --report
-    python test_runner.py --test-file tests/test_cyber_defense.txt --model securityllm
+    python test_runner.py --test-file tests/test_bert_robustness.txt --model cysecbert --report
+    python test_runner.py --test-file tests/test_cyber_defense.txt --model qwen2_5_1_5b
     python test_runner.py --test-file tests/test_phishing_emails.txt --model phishsense
 """
 
@@ -33,15 +33,12 @@ BASE_DIR = Path(__file__).resolve().parent
 
 MODEL_PATHS = {
     "cysecbert": BASE_DIR / "outputs" / "cysecbert-phishing",
-    "secbert": BASE_DIR / "outputs" / "secbert-phishing",
-    "securityllm": BASE_DIR / "outputs" / "securityllm-targeted-lora",
-    "securityllm-merged": BASE_DIR / "outputs" / "securityllm-merged",
     "phishsense": BASE_DIR / "outputs" / "phishsense-targeted-lora",
-    "phishsense-merged": BASE_DIR / "outputs" / "phishsense-merged",
+    "qwen2_5_1_5b": BASE_DIR / "outputs" / "qwen2.5-1.5b",
+    "smollm2_1_7b": BASE_DIR / "outputs" / "smollm2-1.7b",
 }
 
 BASE_MODELS = {
-    "securityllm": BASE_DIR / "models" / "SecurityLLM",
     "phishsense": BASE_DIR / "models" / "Llama-Phishsense-1B",
 }
 
@@ -324,7 +321,7 @@ def run_tests(
     }
 
     # Déterminer le type de modèle
-    is_bert = model_name in ["cysecbert", "secbert"]
+    is_bert = model_name in ["cysecbert"]
 
     if is_bert:
         model_path = MODEL_PATHS[model_name]
@@ -448,8 +445,7 @@ def main():
     )
     parser.add_argument(
         "--model", required=True,
-        choices=["cysecbert", "secbert", "securityllm", "securityllm-merged",
-                 "phishsense", "phishsense-merged"],
+        choices=["cysecbert", "phishsense", "qwen2_5_1_5b", "smollm2_1_7b"],
         help="Modèle à tester"
     )
     parser.add_argument(

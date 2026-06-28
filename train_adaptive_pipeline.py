@@ -67,10 +67,8 @@ from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 BASE_DIR = Path(__file__).resolve().parent
 
 DEFAULT_MODELS = {
-    "securityllm": BASE_DIR / "models" / "SecurityLLM",
     "phishsense": BASE_DIR / "models" / "Llama-Phishsense-1B",
     "cysecbert": BASE_DIR / "models" / "CySecBERT",
-    "secbert": BASE_DIR / "models" / "SecBERT",
 }
 
 DEFAULT_OUTPUT_DIR = BASE_DIR / "outputs"
@@ -138,10 +136,8 @@ DATASETS_BY_TASK = {
 }
 
 MODEL_TASK_MAPPING = {
-    "securityllm": ["cyber_general", "cve_analysis"],
-    "phishsense": ["phishing", "cyber_general"],
+    "phishsense": ["phishing"],
     "cysecbert": ["phishing"],
-    "secbert": ["phishing"],
 }
 
 MIN_IMPROVEMENT_DELTA = 0.03
@@ -1238,7 +1234,7 @@ def run_baseline_evaluation(
         print(f"[WARN] Aucun holdout phishing trouvé dans {holdout_dir / 'phishing'}")
         print("       Lance d'abord : python train_adaptive_pipeline.py holdout")
 
-    for model_name in ["cysecbert", "secbert"]:
+    for model_name in ["cysecbert"]:
         if model_name not in models or not models[model_name].exists():
             print(f"[SKIP] {model_name} : modèle introuvable")
             continue
@@ -1255,7 +1251,7 @@ def run_baseline_evaluation(
             else:
                 print(f"    → F1={metrics['f1']:.4f} | Acc={metrics['accuracy']:.4f} | n={metrics['n_samples']}")
 
-    for model_name in ["securityllm", "phishsense"]:
+    for model_name in ["phishsense"]:
         if model_name not in models or not models[model_name].exists():
             print(f"[SKIP] {model_name} : modèle introuvable")
             continue
@@ -1505,10 +1501,8 @@ def cmd_holdout(args):
 
 def cmd_baseline(args):
     models = {
-        "securityllm": Path(args.security_model),
         "phishsense": Path(args.phish_model),
         "cysecbert": Path(args.cysecbert_model),
-        "secbert": Path(args.secbert_model),
     }
     run_baseline_evaluation(
         holdout_dir=Path(args.holdout_dir),
@@ -1524,23 +1518,19 @@ def cmd_train(args):
     enforce_gpu(allow_cpu=args.allow_cpu)
 
     models = {
-        "securityllm": Path(args.security_model),
         "phishsense": Path(args.phish_model),
         "cysecbert": Path(args.cysecbert_model),
-        "secbert": Path(args.secbert_model),
     }
     outputs = {
-        "securityllm": Path(args.output_dir) / "securityllm-targeted-lora",
         "phishsense": Path(args.output_dir) / "phishsense-targeted-lora",
         "cysecbert": Path(args.output_dir) / "cysecbert-phishing",
-        "secbert": Path(args.output_dir) / "secbert-phishing",
     }
 
-    selected = ["securityllm", "phishsense", "cysecbert", "secbert"] if args.train == "all" else [args.train]
+    selected = ["phishsense", "cysecbert"] if args.train == "all" else [args.train]
     print(f"[+] Sélection : {selected}")
 
     for name in selected:
-        if name in ["securityllm", "phishsense"]:
+        if name == "phishsense":
             tasks = MODEL_TASK_MAPPING[name]
             train_llm_lora_for_tasks(
                 model_path=models[name],
@@ -1565,7 +1555,7 @@ def cmd_train(args):
                 dataset_fraction=args.dataset_fraction,
                 dataset_slice=args.dataset_slice,
             )
-        elif name in ["cysecbert", "secbert"]:
+        elif name == "cysecbert":
             train_bert_classifier_adaptive(
                 model_path=models[name],
                 task="phishing",
@@ -1590,10 +1580,9 @@ def cmd_train(args):
 
 def cmd_merge(args):
     models = {
-        "securityllm": (Path(args.security_model), Path(args.output_dir) / "securityllm-targeted-lora"),
         "phishsense": (Path(args.phish_model), Path(args.output_dir) / "phishsense-targeted-lora"),
     }
-    selected = ["securityllm", "phishsense"] if args.target == "all" else [args.target]
+    selected = ["phishsense"] if args.target == "all" else [args.target]
     for name in selected:
         base, adapter = models[name]
         merged_out = Path(args.output_dir) / f"{name}-merged"
@@ -1638,7 +1627,6 @@ def cmd_eval(args):
 
     outputs = {
         "cysecbert": Path(args.output_dir) / "cysecbert-phishing",
-        "secbert": Path(args.output_dir) / "secbert-phishing",
     }
 
     report = {"timestamp": datetime.now().isoformat(), "scores": {}}
@@ -1692,22 +1680,14 @@ def cmd_decide(args):
 
 def cmd_test(args):
     outputs = {
-        "securityllm": Path(args.output_dir) / "securityllm-targeted-lora",
         "phishsense": Path(args.output_dir) / "phishsense-targeted-lora",
         "cysecbert": Path(args.output_dir) / "cysecbert-phishing",
-        "secbert": Path(args.output_dir) / "secbert-phishing",
     }
-    test_lora_adapter(
-        Path(args.security_model), outputs["securityllm"],
-        "Explique une règle Sigma pour détecter PowerShell EncodedCommand.",
-    )
     test_lora_adapter(
         Path(args.phish_model), outputs["phishsense"],
         "Analyse cet email : Votre compte sera suspendu, cliquez ici.",
     )
     test_bert_classifier(outputs["cysecbert"],
-                         "Your account will be suspended. Click here to verify.")
-    test_bert_classifier(outputs["secbert"],
                          "Your account will be suspended. Click here to verify.")
 
 

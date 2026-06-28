@@ -49,7 +49,7 @@ def test_model_router():
     models = result.output["models"]
     assert len(models) > 0
     model_ids = [m["model_id"] for m in models]
-    assert "cysecbert" in model_ids or "secbert" in model_ids or "phishsense" in model_ids
+    assert "cysecbert" in model_ids or "phishsense" in model_ids
     print(f"[PASS] ModelRouter: {[m['model_id'] for m in models]}")
 
 

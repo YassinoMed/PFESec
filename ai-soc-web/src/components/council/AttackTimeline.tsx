@@ -84,8 +84,8 @@ export default function AttackTimeline({ timeline }: AttackTimelineProps) {
                   {/* Techniques list */}
                   {phase.techniques && phase.techniques.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-1">
-                      {phase.techniques.map((tech) => (
-                        <span key={tech} className="rounded bg-white/[0.04] border border-white/5 px-2 py-0.5 text-[10px] text-secondary font-mono">
+                      {phase.techniques.map((tech, idx) => (
+                        <span key={`${tech}-${idx}`} className="rounded bg-white/[0.04] border border-white/5 px-2 py-0.5 text-[10px] text-secondary font-mono">
                           {tech}
                         </span>
                       ))}

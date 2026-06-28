@@ -6,9 +6,23 @@ class EvidenceFuser:
     def __init__(self):
         self.weights = {
             "cysecbert": 1.0,
-            "secbert": 1.0,
             "phishsense": 1.2,
-            "securityllm": 1.3,
+            "qwen2_5_1_5b": 1.3,
+            "smollm2_1_7b": 1.1,
+            "malbert": 1.0,
+            "malconv": 1.0,
+            "netbert": 1.0,
+            "flowtransformer": 1.0,
+            "codebert": 1.0,
+            "graphcodebert": 1.0,
+            "urlbert": 1.0,
+            "urlnet": 1.0,
+            "attackbert": 1.0,
+            "iocbert": 1.0,
+            "logbert": 1.0,
+            "deeplog": 1.0,
+            "paddleocr": 1.0,
+            "trocr_small": 1.0,
         }
 
     def fuse_classifications(self, results: List[Dict]) -> Dict:

@@ -65,24 +65,36 @@ interface CouncilResult {
   metrics: { total_execution_ms: number; experts_completed: number; experts_failed: number };
 }
 
-const ORCHESTRATOR_URL = process.env.NEXT_PUBLIC_ORCHESTRATOR_URL || "";
+function getOrchestratorUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_ORCHESTRATOR_URL;
+  if (envUrl) return envUrl.trim();
+  if (typeof window !== "undefined") {
+    return `${window.location.protocol}//${window.location.hostname}:8080`;
+  }
+  return "http://localhost:8080";
+}
 
 const anonymize = (text: string): string => {
   if (!text) return text;
   return text
-    .replace(/cysecbert/gi, "Expert 1")
-    .replace(/secbert/gi, "Expert 2")
-    .replace(/phishsense-merged/gi, "Expert 3")
-    .replace(/phishsense/gi, "Expert 3")
-    .replace(/securityllm-merged/gi, "Expert 4")
-    .replace(/securityllm/gi, "Expert 4")
-    .replace(/security_rag/gi, "Expert RAG")
-    .replace(/rag/gi, "Expert RAG")
-    .replace(/CySecBERT/g, "Expert 1")
-    .replace(/SecBERT/g, "Expert 2")
-    .replace(/PhishSense 1B/g, "Expert 3")
-    .replace(/SecurityLLM/g, "Expert 4")
-    .replace(/Security RAG/g, "Expert RAG");
+    .replace(/cysecbert/gi, "CySecBERT")
+    .replace(/phishsense/gi, "PhishSense")
+    .replace(/codebert/gi, "CodeBERT")
+    .replace(/graphcodebert/gi, "GraphCodeBERT")
+    .replace(/netbert/gi, "NetBERT")
+    .replace(/flowtransformer/gi, "FlowTransformer")
+    .replace(/malbert/gi, "MalBERT")
+    .replace(/malconv/gi, "MalConv")
+    .replace(/attackbert/gi, "AttackBERT")
+    .replace(/iocbert/gi, "IOCBERT")
+    .replace(/urlbert/gi, "URLBERT")
+    .replace(/urlnet/gi, "URLNet")
+    .replace(/logbert/gi, "LogBERT")
+    .replace(/deeplog/gi, "DeepLog")
+    .replace(/paddleocr/gi, "PaddleOCR")
+    .replace(/trocr_small/gi, "TrOCR")
+    .replace(/qwen2_5_1_5b/gi, "Qwen2.5-1.5B")
+    .replace(/smollm2_1_7b/gi, "SmolLM2-1.7B");
 };
 
 export default function CouncilPanel() {
@@ -97,7 +109,7 @@ export default function CouncilPanel() {
     setError("");
     setResult(null);
     try {
-      const res = await fetch(`${ORCHESTRATOR_URL}/api/v1/security/council`, {
+      const res = await fetch(`${getOrchestratorUrl()}/api/v1/security/council`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query }),
@@ -172,8 +184,8 @@ function CouncilDisplay({ result }: { result: CouncilResult }) {
           {anonymize(result.final_response.answer)}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          {result.final_response.decision_reasons.map((reason) => (
-            <span key={reason} className="rounded-lg bg-primary/10 px-2.5 py-1 text-[11px] text-primary">{anonymize(reason)}</span>
+          {result.final_response.decision_reasons.map((reason, idx) => (
+            <span key={`reason-${idx}`} className="rounded-lg bg-primary/10 px-2.5 py-1 text-[11px] text-primary">{anonymize(reason)}</span>
           ))}
         </div>
       </Card>
@@ -241,7 +253,7 @@ function Timeline({ items }: { items: CouncilResult["timeline"] }) {
       <CardHeader title="Timeline de décision" subtitle="Étapes du Master AI" icon={<Clock size={18} />} />
       <div className="space-y-2">
         {items.map((item, index) => (
-          <div key={item.name} className="flex items-center gap-3 rounded-lg bg-white/[0.02] px-3 py-2">
+          <div key={`${item.name}-${index}`} className="flex items-center gap-3 rounded-lg bg-white/[0.02] px-3 py-2">
             <span className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold", item.status === "completed" ? "bg-accept/15 text-accept" : "bg-warn/15 text-warn")}>{index + 1}</span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium capitalize text-[#f0f4ff]">{anonymize(item.name.replace(/_/g, " "))}</p>

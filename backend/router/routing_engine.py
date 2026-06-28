@@ -30,11 +30,23 @@ class RoutingEngine:
     def _build_model_paths(self) -> Dict[str, str]:
         return {
             "cysecbert": "outputs/cysecbert-phishing",
-            "secbert": "outputs/secbert-phishing",
             "phishsense": "outputs/phishsense-targeted-lora",
-            "phishsense-merged": "outputs/phishsense-merged",
-            "securityllm": "outputs/securityllm-targeted-lora",
-            "securityllm-merged": "outputs/securityllm-merged",
+            "qwen2_5_1_5b": "outputs/qwen2.5-1.5b",
+            "smollm2_1_7b": "outputs/smollm2-1.7b",
+            "codebert": "models/web_security/codebert",
+            "graphcodebert": "models/web_security/graphcodebert",
+            "netbert": "models/network/netbert",
+            "flowtransformer": "models/network/flowtransformer",
+            "malbert": "models/malware/malbert",
+            "malconv": "models/malware/malconv",
+            "attackbert": "models/threat/attackbert",
+            "iocbert": "models/threat/iocbert",
+            "urlbert": "models/url/urlbert",
+            "urlnet": "models/url/urlnet",
+            "logbert": "models/logs/logbert",
+            "deeplog": "models/logs/deeplog",
+            "paddleocr": "models/ocr/paddleocr",
+            "trocr_small": "models/ocr/trocr",
         }
 
     async def infer(self, request: InferenceRequest) -> InferenceResponse:
@@ -85,8 +97,10 @@ class RoutingEngine:
             )
 
     async def infer_batch(self, requests: List[InferenceRequest]) -> List[InferenceResponse]:
-        bert_requests = [r for r in requests if r.model_id in ("cysecbert", "secbert")]
-        llm_requests = [r for r in requests if r.model_id not in ("cysecbert", "secbert")]
+        bert_ids = {"cysecbert", "codebert", "graphcodebert", "netbert", "malbert",
+                     "attackbert", "iocbert", "urlbert", "logbert", "flowtransformer"}
+        bert_requests = [r for r in requests if r.model_id in bert_ids]
+        llm_requests = [r for r in requests if r.model_id not in bert_ids]
 
         results = []
 

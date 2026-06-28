@@ -12,14 +12,25 @@ class AgentConfig:
 
 @dataclass
 class ModelRouterConfig:
-    phishing_models: List[str] = field(default_factory=lambda: ["cysecbert", "secbert", "phishsense"])
-    soc_models: List[str] = field(default_factory=lambda: ["securityllm", "security_rag"])
-    threat_intel_models: List[str] = field(default_factory=lambda: ["rag", "threat_intel"])
-    general_models: List[str] = field(default_factory=lambda: ["securityllm"])
+    email_models: List[str] = field(default_factory=lambda: ["cysecbert", "phishsense"])
+    web_models: List[str] = field(default_factory=lambda: ["codebert", "graphcodebert"])
+    network_models: List[str] = field(default_factory=lambda: ["netbert", "flowtransformer"])
+    malware_models: List[str] = field(default_factory=lambda: ["malbert", "malconv"])
+    threat_intel_models: List[str] = field(default_factory=lambda: ["attackbert", "iocbert"])
+    url_models: List[str] = field(default_factory=lambda: ["urlbert", "urlnet"])
+    log_models: List[str] = field(default_factory=lambda: ["logbert", "deeplog"])
+    ocr_models: List[str] = field(default_factory=lambda: ["paddleocr", "trocr_small"])
+    llm_models: List[str] = field(default_factory=lambda: ["qwen2_5_1_5b", "smollm2_1_7b"])
     priority_order: Dict[str, int] = field(default_factory=lambda: {
-        "cysecbert": 1, "secbert": 2, "phishsense": 3,
-        "securityllm": 1, "security_rag": 2,
-        "rag": 1, "threat_intel": 2
+        "cysecbert": 1, "phishsense": 2,
+        "codebert": 1, "graphcodebert": 2,
+        "netbert": 1, "flowtransformer": 2,
+        "malbert": 1, "malconv": 2,
+        "attackbert": 1, "iocbert": 2,
+        "urlbert": 1, "urlnet": 2,
+        "logbert": 1, "deeplog": 2,
+        "paddleocr": 1, "trocr_small": 2,
+        "qwen2_5_1_5b": 1, "smollm2_1_7b": 2,
     })
 
 

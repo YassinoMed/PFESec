@@ -67,22 +67,36 @@ const confBg = (level: string) => {
   }
 };
 
+function getOrchestratorUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_ORCHESTRATOR_URL;
+  if (envUrl) return envUrl.trim();
+  if (typeof window !== "undefined") {
+    return `${window.location.protocol}//${window.location.hostname}:8080`;
+  }
+  return "http://localhost:8080";
+}
+
 const anonymize = (text: string): string => {
   if (!text) return text;
   return text
-    .replace(/cysecbert/gi, "Expert 1")
-    .replace(/secbert/gi, "Expert 2")
-    .replace(/phishsense-merged/gi, "Expert 3")
-    .replace(/phishsense/gi, "Expert 3")
-    .replace(/securityllm-merged/gi, "Expert 4")
-    .replace(/securityllm/gi, "Expert 4")
-    .replace(/security_rag/gi, "Expert RAG")
-    .replace(/rag/gi, "Expert RAG")
-    .replace(/CySecBERT/g, "Expert 1")
-    .replace(/SecBERT/g, "Expert 2")
-    .replace(/PhishSense 1B/g, "Expert 3")
-    .replace(/SecurityLLM/g, "Expert 4")
-    .replace(/Security RAG/g, "Expert RAG");
+    .replace(/cysecbert/gi, "CySecBERT")
+    .replace(/phishsense/gi, "PhishSense")
+    .replace(/codebert/gi, "CodeBERT")
+    .replace(/graphcodebert/gi, "GraphCodeBERT")
+    .replace(/netbert/gi, "NetBERT")
+    .replace(/flowtransformer/gi, "FlowTransformer")
+    .replace(/malbert/gi, "MalBERT")
+    .replace(/malconv/gi, "MalConv")
+    .replace(/attackbert/gi, "AttackBERT")
+    .replace(/iocbert/gi, "IOCBERT")
+    .replace(/urlbert/gi, "URLBERT")
+    .replace(/urlnet/gi, "URLNet")
+    .replace(/logbert/gi, "LogBERT")
+    .replace(/deeplog/gi, "DeepLog")
+    .replace(/paddleocr/gi, "PaddleOCR")
+    .replace(/trocr_small/gi, "TrOCR")
+    .replace(/qwen2_5_1_5b/gi, "Qwen2.5-1.5B")
+    .replace(/smollm2_1_7b/gi, "SmolLM2-1.7B");
 };
 
 export default function ConsensusPanel() {
@@ -97,7 +111,7 @@ export default function ConsensusPanel() {
     setError("");
     setResult(null);
     try {
-      const url = `${process.env.NEXT_PUBLIC_ORCHESTRATOR_URL || ""}/api/v1/security/consensus`;
+      const url = `${getOrchestratorUrl()}/api/v1/security/consensus`;
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

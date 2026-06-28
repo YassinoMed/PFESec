@@ -11,7 +11,6 @@ def test_fuse_classifications():
     fuser = EvidenceFuser()
     results = [
         {"model_id": "cysecbert", "verdict": "BLOCK", "confidence": 0.95},
-        {"model_id": "secbert", "verdict": "BLOCK", "confidence": 0.88},
         {"model_id": "phishsense", "verdict": "ACCEPT", "confidence": 0.60},
     ]
     fused = fuser.fuse_classifications(results)
@@ -24,7 +23,7 @@ def test_fuse_classifications_tie():
     fuser = EvidenceFuser()
     results = [
         {"model_id": "cysecbert", "verdict": "BLOCK", "confidence": 0.5},
-        {"model_id": "secbert", "verdict": "ACCEPT", "confidence": 0.5},
+        {"model_id": "phishsense", "verdict": "ACCEPT", "confidence": 0.5},
     ]
     fused = fuser.fuse_classifications(results)
     print(f"[PASS] Fusion tie: verdict={fused['verdict']}, block={fused['block_weight']}, accept={fused['accept_weight']}")
@@ -41,7 +40,7 @@ def test_threat_score():
     fuser = EvidenceFuser()
     model_results = [
         {"model_id": "cysecbert", "threat_score": 85},
-        {"model_id": "secbert", "threat_score": 75},
+        {"model_id": "phishsense", "threat_score": 75},
     ]
     agent_results = []
     score = fuser.compute_threat_score(model_results, agent_results)

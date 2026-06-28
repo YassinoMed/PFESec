@@ -27,13 +27,23 @@ interface DecisionJournalProps {
 
 const EXPERT_INFO: Record<string, { name: string; emoji: string }> = {
   cysecbert: { name: "CySecBERT", emoji: "🛡️" },
-  secbert: { name: "SecBERT", emoji: "🔒" },
   phishsense: { name: "PhishSense", emoji: "🦙" },
-  "phishsense-merged": { name: "PhishSense", emoji: "🦙" },
-  securityllm: { name: "SecurityLLM", emoji: "🧠" },
-  "securityllm-merged": { name: "SecurityLLM", emoji: "🧠" },
-  security_rag: { name: "RAG Agent", emoji: "📂" },
-  rag: { name: "RAG Agent", emoji: "📂" },
+  codebert: { name: "CodeBERT", emoji: "💻" },
+  graphcodebert: { name: "GraphCodeBERT", emoji: "🔗" },
+  netbert: { name: "NetBERT", emoji: "📡" },
+  flowtransformer: { name: "FlowTransformer", emoji: "🌊" },
+  malbert: { name: "MalBERT", emoji: "🦠" },
+  malconv: { name: "MalConv", emoji: "⚙️" },
+  attackbert: { name: "AttackBERT", emoji: "🎯" },
+  iocbert: { name: "IOCBERT", emoji: "🔍" },
+  urlbert: { name: "URLBERT", emoji: "🔗" },
+  urlnet: { name: "URLNet", emoji: "🌐" },
+  logbert: { name: "LogBERT", emoji: "📝" },
+  deeplog: { name: "DeepLog", emoji: "📊" },
+  paddleocr: { name: "PaddleOCR", emoji: "📄" },
+  trocr_small: { name: "TrOCR", emoji: "📖" },
+  qwen2_5_1_5b: { name: "Qwen2.5-1.5B", emoji: "🧠" },
+  smollm2_1_7b: { name: "SmolLM2-1.7B", emoji: "⚡" },
   phishing_expert: { name: "Phishing Expert", emoji: "🎣" },
   email_header_expert: { name: "Email Security Expert", emoji: "📧" },
   url_expert: { name: "URL Reputation Expert", emoji: "🌐" },
@@ -145,8 +155,8 @@ export default function DecisionJournal({ journal }: DecisionJournalProps) {
           <div className="space-y-1.5">
             <span className="text-[10px] text-secondary uppercase block tracking-wider">Experts Sollicités</span>
             <div className="flex flex-wrap gap-1">
-              {experts_solicited.map((exp) => (
-                <span key={exp} className="rounded bg-white/[0.03] border border-white/5 px-2 py-0.5 text-[10px] text-secondary">
+              {experts_solicited.map((exp, idx) => (
+                <span key={`${exp}-${idx}`} className="rounded bg-white/[0.03] border border-white/5 px-2 py-0.5 text-[10px] text-secondary">
                   {anonymizeExpert(exp)}
                 </span>
               ))}
@@ -156,8 +166,8 @@ export default function DecisionJournal({ journal }: DecisionJournalProps) {
           <div className="space-y-1.5">
             <span className="text-[10px] text-secondary uppercase block tracking-wider">Sources Consultées</span>
             <div className="flex flex-wrap gap-1">
-              {sources_consulted.map((src) => (
-                <span key={src} className="rounded bg-primary/10 border border-primary/20 px-2 py-0.5 text-[10px] text-primary">
+              {sources_consulted.map((src, idx) => (
+                <span key={`${src}-${idx}`} className="rounded bg-primary/10 border border-primary/20 px-2 py-0.5 text-[10px] text-primary">
                   {src}
                 </span>
               ))}

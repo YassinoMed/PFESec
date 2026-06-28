@@ -12,6 +12,7 @@ import json
 import subprocess
 import urllib.parse
 import sys
+import argparse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
@@ -133,50 +134,32 @@ class SecurityTestHandler(BaseHTTPRequestHandler):
                 "description": "Modèle BERT fine-tuné sur la détection d'emails de phishing et malveillants."
             },
             {
-                "id": "secbert",
-                "name": "SecBERT Classifier",
-                "type": "BERT (Classification)",
-                "path": str(outputs_dir / "secbert-phishing"),
-                "base_path": str(models_dir / "SecBERT"),
-                "status": "READY" if (outputs_dir / "secbert-phishing" / "config.json").exists() else "NOT_TRAINED",
-                "description": "Modèle SecBERT adapté à la cybersécurité, orienté classification de phishing."
-            },
-            {
-                "id": "phishsense-merged",
-                "name": "Llama Phishsense (Merged)",
-                "type": "LLM (Inférence)",
-                "path": str(outputs_dir / "phishsense-merged"),
-                "base_path": str(models_dir / "Llama-Phishsense-1B"),
-                "status": "READY" if (outputs_dir / "phishsense-merged" / "config.json").exists() else "NOT_MERGED",
-                "description": "Llama 1B avec LoRA fusionné, spécialisé dans l'analyse sémantique du phishing."
-            },
-            {
-                "id": "securityllm-merged",
-                "name": "SecurityLLM (Merged)",
-                "type": "LLM (Inférence)",
-                "path": str(outputs_dir / "securityllm-merged"),
-                "base_path": str(models_dir / "SecurityLLM"),
-                "status": "READY" if (outputs_dir / "securityllm-merged" / "config.json").exists() else "NOT_MERGED",
-                "description": "Modèle SecurityLLM 7B fusionné, assistant d'analyse SOC et règles de détection."
-            },
-            {
                 "id": "phishsense",
-                "name": "Llama Phishsense (LoRA Adapter)",
-                "type": "LLM + LoRA",
+                "name": "Llama Phishsense (LoRA)",
+                "type": "LLM (LoRA)",
                 "path": str(outputs_dir / "phishsense-targeted-lora"),
                 "base_path": str(models_dir / "Llama-Phishsense-1B"),
                 "status": "READY" if (outputs_dir / "phishsense-targeted-lora" / "adapter_config.json").exists() else "NOT_TRAINED",
-                "description": "Adapter LoRA léger pour la détection de phishing sur base Llama-Phishsense-1B."
+                "description": "Llama 1B + LoRA, spécialisé dans l'analyse sémantique du phishing avancé."
             },
             {
-                "id": "securityllm",
-                "name": "SecurityLLM (LoRA Adapter)",
-                "type": "LLM + LoRA",
-                "path": str(outputs_dir / "securityllm-targeted-lora"),
-                "base_path": str(models_dir / "SecurityLLM"),
-                "status": "READY" if (outputs_dir / "securityllm-targeted-lora" / "adapter_config.json").exists() else "NOT_TRAINED",
-                "description": "Adapter LoRA d'analyse SOC entraîné sur base SecurityLLM."
-            }
+                "id": "qwen2_5_1_5b",
+                "name": "Qwen2.5-1.5B-Instruct",
+                "type": "LLM (Inférence)",
+                "path": str(outputs_dir / "qwen2.5-1.5b"),
+                "base_path": str(models_dir / "Qwen2.5-1.5B-Instruct"),
+                "status": "READY" if (outputs_dir / "qwen2.5-1.5b" / "config.json").exists() else "NOT_INSTALLED",
+                "description": "LLM 1.5B pour raisonnement SOC, synthèse et décision."
+            },
+            {
+                "id": "smollm2_1_7b",
+                "name": "SmolLM2-1.7B-Instruct",
+                "type": "LLM (Inférence)",
+                "path": str(outputs_dir / "smollm2-1.7b"),
+                "base_path": str(models_dir / "SmolLM2-1.7B-Instruct"),
+                "status": "READY" if (outputs_dir / "smollm2-1.7b" / "config.json").exists() else "NOT_INSTALLED",
+                "description": "LLM 1.7B pour synthèse rapide d'alertes et playbooks IR."
+            },
         ]
 
         self.send_json_response(200, {"models": models})
@@ -191,11 +174,11 @@ class SecurityTestHandler(BaseHTTPRequestHandler):
                 # Déterminer la catégorie en fonction du nom
                 category = "Autre"
                 if "phishing" in file.name.lower():
-                    category = "Détection Phishing (BERT & LLM)"
+                    category = "Détection Phishing (CySecBERT & PhishSense)"
                 elif "cyber_defense" in file.name.lower():
-                    category = "Analyse SOC & Règles (SecurityLLM)"
+                    category = "Analyse SOC & Règles (Qwen/SmolLM)"
                 elif "robustness" in file.name.lower():
-                    category = "Robustesse & Adversarial (BERT)"
+                    category = "Robustesse & Adversarial (CySecBERT)"
 
                 scripts.append({
                     "name": file.name,
@@ -353,16 +336,12 @@ class SecurityTestHandler(BaseHTTPRequestHandler):
         outputs_dir = BASE_DIR / "outputs"
         if model_id == "cysecbert":
             return outputs_dir / "cysecbert-phishing"
-        elif model_id == "secbert":
-            return outputs_dir / "secbert-phishing"
-        elif model_id == "phishsense-merged":
-            return outputs_dir / "phishsense-merged"
-        elif model_id == "securityllm-merged":
-            return outputs_dir / "securityllm-merged"
         elif model_id == "phishsense":
             return outputs_dir / "phishsense-targeted-lora"
-        elif model_id == "securityllm":
-            return outputs_dir / "securityllm-targeted-lora"
+        elif model_id == "qwen2_5_1_5b":
+            return outputs_dir / "qwen2.5-1.5b"
+        elif model_id == "smollm2_1_7b":
+            return outputs_dir / "smollm2-1.7b"
         return outputs_dir / model_id
 
     def parse_predict_output(self, stdout: str, model_id: str) -> Dict[str, Any]:
@@ -370,7 +349,7 @@ class SecurityTestHandler(BaseHTTPRequestHandler):
         data = {"predicted": False, "prediction": ""}
         
         # Cas BERT
-        if model_id in ["cysecbert", "secbert"]:
+        if model_id == "cysecbert":
             # Format attendu (imprimé par test_bert_classifier) :
             # Prédit : [LABEL] (confiance : XX.XX%)
             # Ou "Probabilités :" suivi des labels
@@ -467,11 +446,15 @@ class SecurityTestHandler(BaseHTTPRequestHandler):
 
 
 def run_server():
-    server_address = ('', PORT)
+    parser = argparse.ArgumentParser(description="Serveur de test de sécurité")
+    parser.add_argument("--port", type=int, default=PORT, help="Port d'écoute (défaut: 8000)")
+    args = parser.parse_args()
+    port = args.port
+    server_address = ('', port)
     httpd = HTTPServer(server_address, SecurityTestHandler)
     print(f"\n{'='*80}")
     print(f"  SERVEUR DE TEST DE SÉCURITÉ LANCÉ")
-    print(f"  URL d'accès : http://localhost:{PORT}/")
+    print(f"  URL d'accès : http://localhost:{port}/")
     print(f"  Dossier racine : {BASE_DIR}")
     print(f"{'='*80}\n")
     try:

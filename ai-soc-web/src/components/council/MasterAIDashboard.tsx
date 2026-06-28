@@ -131,17 +131,34 @@ interface CouncilResult {
   };
 }
 
-const ORCHESTRATOR_URL = process.env.NEXT_PUBLIC_ORCHESTRATOR_URL || "";
+function getOrchestratorUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_ORCHESTRATOR_URL;
+  if (envUrl) return envUrl.trim();
+  if (typeof window !== "undefined") {
+    return `${window.location.protocol}//${window.location.hostname}:8080`;
+  }
+  return "http://localhost:8080";
+}
 
 const EXPERT_INFO: Record<string, { name: string; emoji: string }> = {
   cysecbert: { name: "CySecBERT", emoji: "🛡️" },
-  secbert: { name: "SecBERT", emoji: "🔒" },
   phishsense: { name: "PhishSense", emoji: "🦙" },
-  "phishsense-merged": { name: "PhishSense", emoji: "🦙" },
-  securityllm: { name: "SecurityLLM", emoji: "🧠" },
-  "securityllm-merged": { name: "SecurityLLM", emoji: "🧠" },
-  security_rag: { name: "RAG Agent", emoji: "📂" },
-  rag: { name: "RAG Agent", emoji: "📂" },
+  codebert: { name: "CodeBERT", emoji: "💻" },
+  graphcodebert: { name: "GraphCodeBERT", emoji: "🔗" },
+  netbert: { name: "NetBERT", emoji: "📡" },
+  flowtransformer: { name: "FlowTransformer", emoji: "🌊" },
+  malbert: { name: "MalBERT", emoji: "🦠" },
+  malconv: { name: "MalConv", emoji: "⚙️" },
+  attackbert: { name: "AttackBERT", emoji: "🎯" },
+  iocbert: { name: "IOCBERT", emoji: "🔍" },
+  urlbert: { name: "URLBERT", emoji: "🔗" },
+  urlnet: { name: "URLNet", emoji: "🌐" },
+  logbert: { name: "LogBERT", emoji: "📝" },
+  deeplog: { name: "DeepLog", emoji: "📊" },
+  paddleocr: { name: "PaddleOCR", emoji: "📄" },
+  trocr_small: { name: "TrOCR", emoji: "📖" },
+  qwen2_5_1_5b: { name: "Qwen2.5-1.5B", emoji: "🧠" },
+  smollm2_1_7b: { name: "SmolLM2-1.7B", emoji: "⚡" },
   phishing_expert: { name: "Phishing Expert", emoji: "🎣" },
   email_header_expert: { name: "Email Security Expert", emoji: "📧" },
   url_expert: { name: "URL Reputation Expert", emoji: "🌐" },
@@ -228,7 +245,7 @@ export default function MasterAIDashboard() {
     }, 64);
 
     try {
-      const res = await fetch(`${ORCHESTRATOR_URL}/api/v1/security/council`, {
+      const res = await fetch(`${getOrchestratorUrl()}/api/v1/security/council`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query }),
