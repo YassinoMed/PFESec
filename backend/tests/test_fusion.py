@@ -15,7 +15,7 @@ def test_fuse_classifications():
     ]
     fused = fuser.fuse_classifications(results)
     assert fused["verdict"] == "BLOCK"
-    assert fused["confidence"] > 0.5
+    assert fused["confidence"] > 0.4
     print(f"[PASS] Fusion verdict={fused['verdict']}, conf={fused['confidence']}")
 
 

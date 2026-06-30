@@ -129,115 +129,152 @@ class CouncilConsensusEngine:
         self.engine = ConsensusEngine(ConsensusConfig.default())
 
     def compute(self, query: str, analyses: List[ExpertAnalysis], contradictions: List[Dict], fact_check = None) -> Dict:
-        votes = [
-            ModelVote(
-                model_id=a.expert_id,
-                model_name=a.expert_name,
-                category=a.category,
-                confidence=a.confidence,
-                weight=1,
-                response=a.conclusion if a.conclusion != "UNKNOWN" else a.response,
-                inference_ms=a.inference_ms,
-                error=a.error if a.status not in ("completed",) else None,
-            )
-            for a in analyses
-        ]
-        result = self.engine.compute(query, votes).to_dict()
-
-        # --- Advanced Consensus based on Evidence ---
         completed_analyses = [a for a in analyses if a.status == "completed"]
 
-        # 1. Gather all evidence
-        unified_evidence = []
+        n = len(completed_analyses)
+        if n == 0:
+            return _empty_consensus()
+
+        # ── Bloc 2 — Confiance minimale 0.35 ───────────────────────────────
+        boosted = {}
         for a in completed_analyses:
-            unified_evidence.extend(a.evidence)
-        unified_evidence = list(set(unified_evidence))
+            if a.confidence < 35.0 and a.conclusion != "UNKNOWN":
+                boosted[a.expert_id] = True
 
-        # 2. Gather IOCs
-        unified_iocs = []
-        for a in completed_analyses:
-            unified_iocs.extend(a.iocs)
-        seen_iocs = set()
-        dedup_iocs = []
-        for ioc in unified_iocs:
-            key = (ioc.get("type"), ioc.get("value"))
-            if key not in seen_iocs:
-                seen_iocs.add(key)
-                dedup_iocs.append(ioc)
-
-        # 3. RAG Context count
-        rag_count = len(fact_check.references) if fact_check and hasattr(fact_check, 'references') else 0
-
-        # 4. MITRE ATT&CK techniques
-        mitre_techs = []
-        for a in completed_analyses:
-            mitre_techs.extend(a.mitre_techniques)
-        mitre_techs = list(set(mitre_techs))
-
-        # Calculate Consensus Score
-        base_score = result.get("global_score", 0.0)
-
-        # Deduct penalty for contradictions (only count if both experts have confidence >= 30.0)
-        significant_contradictions = []
-        for c in contradictions:
-            left_exp = next((a for a in analyses if a.expert_id == c["left"]), None)
-            right_exp = next((a for a in analyses if a.expert_id == c["right"]), None)
-            if left_exp and right_exp:
-                if left_exp.confidence >= 30.0 and right_exp.confidence >= 30.0:
-                    significant_contradictions.append(c)
-            else:
-                significant_contradictions.append(c)
-
-        contradiction_count = len(significant_contradictions)
-        penalty = contradiction_count * 12.0
-
-        # Boosts based on evidence/IOCs/RAG
-        evidence_bonus = min(len(unified_evidence) * 3.5, 15.0)
-        ioc_bonus = min(len(dedup_iocs) * 5.0, 15.0)
-        rag_bonus = min(rag_count * 4.0, 12.0)
-
-        # Agreement check
-        block_votes = sum(1 for a in completed_analyses if a.conclusion == "BLOCK")
-        accept_votes = sum(1 for a in completed_analyses if a.conclusion == "ACCEPT")
-        total_votes = block_votes + accept_votes
-
-        agreement_bonus = 0.0
-        if total_votes > 0:
-            majority_ratio = max(block_votes, accept_votes) / total_votes
-            if majority_ratio >= 0.75:
-                agreement_bonus = 10.0
-
-        adjusted_score = base_score - penalty + evidence_bonus + ioc_bonus + rag_bonus + agreement_bonus
-        adjusted_score = min(max(adjusted_score, 0.0), 100.0)
-
-        # Calculate False Positive Risk
-        final_decision = result.get("final_response") or "UNKNOWN"
-        if isinstance(final_decision, dict):
-            final_decision = final_decision.get("conclusion", "UNKNOWN")
-        final_decision_str = str(final_decision).upper()
-
-        is_block = any(x in final_decision_str for x in ("BLOCK", "PHISH", "MALICIOUS", "MALWARE", "RANSOMWARE"))
-
-        fp_risk = "Low"
-        if is_block:
-            if adjusted_score >= 85.0 and contradiction_count == 0:
-                fp_risk = "Low"
-            elif adjusted_score >= 60.0 or contradiction_count <= 1:
-                fp_risk = "Medium"
-            else:
-                fp_risk = "High"
+        # ── Bloc 1 — Poids normalisés à somme 1.0 ──────────────────────────
+        raw_weights = {a.expert_id: 1.0 / n for a in completed_analyses}
+        total_weight = sum(raw_weights.values())
+        if abs(total_weight - 1.0) > 0.001:
+            weights = {eid: w / total_weight for eid, w in raw_weights.items()}
+            poids_normalises = True
         else:
-            fp_risk = "Low"
+            weights = raw_weights
+            poids_normalises = False
 
-        result["global_score"] = adjusted_score
-        result["confidence_level"] = "High" if adjusted_score >= 80.0 else "Medium" if adjusted_score >= 50.0 else "Low"
-        result["false_positive_risk"] = fp_risk
-        result["agreements"] = _agreement_points(analyses)
-        result["disagreements"] = contradictions
-        result["unified_evidence"] = unified_evidence
-        result["unified_iocs"] = dedup_iocs
-        result["rag_count"] = rag_count
-        result["mitre_techs"] = mitre_techs
+        # ── Bloc 2 — Score pondéré par verdict ─────────────────────────────
+        verdict_scores: Dict[str, float] = {}
+        for a in completed_analyses:
+            v = a.conclusion
+            if v == "UNKNOWN":
+                continue
+            effective_conf = max(a.confidence, 35.0) if a.expert_id in boosted else a.confidence
+            w = weights.get(a.expert_id, 0.0)
+            verdict_scores[v] = verdict_scores.get(v, 0.0) + (effective_conf / 100.0) * w
+
+        active_weight_sum = sum(weights.get(a.expert_id, 0.0) for a in completed_analyses if a.conclusion != "UNKNOWN")
+        if active_weight_sum > 0:
+            for v in verdict_scores:
+                verdict_scores[v] /= active_weight_sum
+        for v in verdict_scores:
+            verdict_scores[v] = round(verdict_scores[v] * 100.0, 2)
+
+        # ── Comptage des verdicts ───────────────────────────────────────────
+        verdict_counts: Dict[str, int] = {}
+        for a in completed_analyses:
+            v = a.conclusion
+            if v == "UNKNOWN":
+                continue
+            verdict_counts[v] = verdict_counts.get(v, 0) + 1
+
+        if not verdict_counts:
+            return _all_unknown_result(completed_analyses, analyses, contradictions)
+
+        n_agents_that_voted = sum(verdict_counts.values())
+        majority_verdict = max(verdict_counts, key=verdict_counts.get)
+        n_accord = verdict_counts[majority_verdict]
+        ratio_accord = n_accord / n_agents_that_voted if n_agents_that_voted > 0 else 0.0
+        unanimite = ratio_accord == 1.0
+
+        base_score = verdict_scores.get(majority_verdict, 0.0)
+
+        # ── Bonus d'unanimité Bloc 2: +15 points ───────────────────────────
+        score_brut = base_score
+        if unanimite:
+            base_score += 15.0
+
+        # ── Bloc 1 — Règles de plancher renforcées ─────────────────────────
+        plancher_applique = False
+        plancher_unanimite_applique = False
+        valeur_plancher = 0.0
+
+        if unanimite:
+            plancher = 78.0
+            if base_score < plancher:
+                base_score = plancher
+                plancher_applique = True
+                plancher_unanimite_applique = True
+                valeur_plancher = plancher
+        elif ratio_accord >= 0.90:
+            plancher = 75.0
+            if base_score < plancher:
+                base_score = plancher
+                plancher_applique = True
+                valeur_plancher = plancher
+        elif ratio_accord >= 0.75:
+            plancher = 60.0
+            if base_score < plancher:
+                base_score = plancher
+                plancher_applique = True
+                valeur_plancher = plancher
+        elif ratio_accord >= 0.60:
+            plancher = 45.0
+            if base_score < plancher:
+                base_score = plancher
+                plancher_applique = True
+                valeur_plancher = plancher
+
+        # ── Plafonnement ────────────────────────────────────────────────────
+        adjusted_score = min(max(base_score, 0.0), 95.0 if unanimite else 100.0)
+
+        anomalie_detectee = ratio_accord >= 0.90 and score_brut < 65.0 and not plancher_applique
+
+        if anomalie_detectee:
+            import logging
+            logging.getLogger("council.consensus").warning(
+                f"ANOMALIE_CONSENSUS: ratio={ratio_accord:.3f} score_calcule={score_brut:.2f}"
+            )
+
+        # ── Résultat ────────────────────────────────────────────────────────
+        votes_detail = {}
+        for a in completed_analyses:
+            entry = {"verdict": a.conclusion, "confiance": round(a.confidence, 2)}
+            if a.expert_id in boosted:
+                entry["confidence_boosted"] = True
+            votes_detail[a.expert_id] = entry
+
+        result = {
+            "global_score": round(adjusted_score, 2),
+            "confidence_level": "High" if adjusted_score >= 80.0 else "Medium" if adjusted_score >= 50.0 else "Low",
+            "consensus_reached": adjusted_score >= 70.0,
+            "final_response": f"{majority_verdict} (score: {adjusted_score:.1f}%)",
+            "verdict_final": majority_verdict,
+            "score_consensus": round(adjusted_score, 2),
+            "ratio_accord": round(ratio_accord, 3),
+            "votes_detail": votes_detail,
+            "plancher_applique": plancher_applique,
+            "plancher_unanimite_applique": plancher_unanimite_applique,
+            "valeur_plancher": valeur_plancher,
+            "anomalie_detectee": anomalie_detectee,
+            "score_brut": round(score_brut, 2),
+            "poids_normalises": poids_normalises,
+            "confidence_boosted_ids": list(boosted.keys()),
+            "total_models_executed": len(completed_analyses),
+            "total_retained": len(completed_analyses),
+            "total_rejected": len(analyses) - len(completed_analyses),
+            "agreements": _agreement_points(analyses),
+            "disagreements": contradictions,
+            "false_positive_risk": "Low",
+            # Bloc 3 — Métadonnées consensus pour le Decision Journal
+            "consensus_metadata": {
+                "ratio_accord": round(ratio_accord, 3),
+                "nombre_agents": n_agents_that_voted,
+                "plancher_applique": plancher_applique,
+                "score_brut": round(score_brut, 2),
+                "score_final": round(adjusted_score, 2),
+                "unanimite": unanimite,
+                "anomalie_consensus": anomalie_detectee,
+            },
+        }
 
         return result
 
@@ -336,6 +373,76 @@ def _keyword_overlap(left: str, right: str) -> float:
 def _agreement_points(analyses: List[ExpertAnalysis]) -> List[Dict]:
     counts = Counter(a.conclusion for a in analyses if a.status == "completed")
     return [{"conclusion": key, "count": value} for key, value in counts.most_common()]
+
+
+def _all_unknown_result(completed_analyses, analyses, contradictions) -> Dict:
+    return {
+        "global_score": 0.0,
+        "confidence_level": "Low",
+        "consensus_reached": False,
+        "final_response": "UNKNOWN (aucun verdict majoritaire)",
+        "verdict_final": "UNKNOWN",
+        "score_consensus": 0.0,
+        "ratio_accord": 0.0,
+        "votes_detail": {a.expert_id: {"verdict": a.conclusion, "confiance": round(a.confidence, 2)} for a in completed_analyses},
+        "plancher_applique": False,
+        "plancher_unanimite_applique": False,
+        "valeur_plancher": 0.0,
+        "anomalie_detectee": False,
+        "score_brut": 0.0,
+        "poids_normalises": False,
+        "confidence_boosted_ids": [],
+        "total_models_executed": len(completed_analyses),
+        "total_retained": len(completed_analyses),
+        "total_rejected": len(analyses) - len(completed_analyses),
+        "agreements": _agreement_points(analyses),
+        "disagreements": contradictions,
+        "false_positive_risk": "Low",
+        "consensus_metadata": {
+            "ratio_accord": 0.0,
+            "nombre_agents": 0,
+            "plancher_applique": False,
+            "score_brut": 0.0,
+            "score_final": 0.0,
+            "unanimite": False,
+            "anomalie_consensus": False,
+        },
+    }
+
+
+def _empty_consensus() -> Dict:
+    return {
+        "global_score": 0.0,
+        "confidence_level": "N/A",
+        "consensus_reached": False,
+        "final_response": "Aucun expert disponible",
+        "verdict_final": "UNKNOWN",
+        "score_consensus": 0.0,
+        "ratio_accord": 0.0,
+        "votes_detail": {},
+        "plancher_applique": False,
+        "plancher_unanimite_applique": False,
+        "valeur_plancher": 0.0,
+        "anomalie_detectee": False,
+        "score_brut": 0.0,
+        "poids_normalises": False,
+        "confidence_boosted_ids": [],
+        "total_models_executed": 0,
+        "total_retained": 0,
+        "total_rejected": 0,
+        "agreements": [],
+        "disagreements": [],
+        "false_positive_risk": "N/A",
+        "consensus_metadata": {
+            "ratio_accord": 0.0,
+            "nombre_agents": 0,
+            "plancher_applique": False,
+            "score_brut": 0.0,
+            "score_final": 0.0,
+            "unanimite": False,
+            "anomalie_consensus": False,
+        },
+    }
 
 
 def _majority_conclusion(analyses: List[ExpertAnalysis]) -> str:

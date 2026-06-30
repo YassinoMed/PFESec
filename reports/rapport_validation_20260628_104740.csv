@@ -1,0 +1,4 @@
+ID,Categorie,Priorite,Titre,Resultat,Entree,Attendu,Obtenu,Experts,Consensus,Confiance,Latence,DJ,Erreur
+T01,Classification,PRIORITE 1 - Indispensable,Email phishing evident,PASS,URGENT: Votre compte a ete suspendu. Cliquez ici pour verifier: http://bit.ly/3x,PHISHING CONFIRME,PHISHING CONFIRMÉ,"phishing_expert, email_header_expert, url_expert, threat_intel_expert",100.0%,High,0.0s,?,
+T02,Classification,PRIORITE 1 - Indispensable,Email legitime,FAIL,"Bonjour, suite a notre reunion de vendredi, veuillez trouver ci-joint le compte-",LEGITIME,EMAIL LÉGITIME,"phishing_expert, email_header_expert, url_expert, threat_intel_expert",40.5%,Low,0.0s,?,Validation echouee
+T03,Classification,PRIORITE 1 - Indispensable,Email ambigu,PASS,"Cher client, nous avons remarque une activite inhabituelle. Merci de verifier vo",INCERTAIN + escalade,ACTIVITÉ SAINE (ACCEPT),"phishing_expert, malware_expert, ioc_expert, mitre_expert, risk_assessment_virtual_expert",32.0%,Low,0.0s,?,

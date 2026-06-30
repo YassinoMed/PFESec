@@ -296,8 +296,17 @@ class DecisionJournal:
     final_decision: str = "UNKNOWN"
     decision_justification: str = ""
     contradictions_found: int = 0
+    contradictions_resolved: List[Dict] = field(default_factory=list)
     false_positive_risk: str = "unknown"
     recommended_next_steps: List[str] = field(default_factory=list)
+
+    def validate_before_emission(self) -> None:
+        if self.contradictions_found > 0 and not self.contradictions_resolved:
+            raise ValueError(
+                f"BLOCAGE: {self.contradictions_found} contradiction(s) détectée(s) "
+                "mais aucune n'est enregistrée dans contradictions_resolved. "
+                "Le DecisionJournal ne peut pas être émis sans traçabilité complète."
+            )
 
     def to_dict(self) -> Dict:
         return {
@@ -314,6 +323,7 @@ class DecisionJournal:
             "final_decision": self.final_decision,
             "decision_justification": self.decision_justification,
             "contradictions_found": self.contradictions_found,
+            "contradictions_resolved": self.contradictions_resolved,
             "false_positive_risk": self.false_positive_risk,
             "recommended_next_steps": self.recommended_next_steps,
         }

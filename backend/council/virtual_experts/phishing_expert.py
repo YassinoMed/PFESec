@@ -1,6 +1,29 @@
-"""Expert 1 — Phishing & Social Engineering Specialist."""
-from typing import Dict, List
+"""Expert 1 — Phishing & Social Engineering Specialist.
+Implements RÈGLE-T72: Short email confidence calibration.
+"""
+import re
+from typing import Dict, List, Tuple
 from backend.council.virtual_experts.base import VirtualExpert
+
+
+def _calibrate_short_email(query: str, confidence: float) -> Tuple[float, bool]:
+    """RÈGLE-T72: Plafonne la confiance pour les emails courts/ambigus."""
+    words = query.split()
+    word_count = len(words)
+    char_count = len(query)
+
+    has_url = bool(re.search(r'https?://', query))
+    has_attachment = any(w in query for w in ["piece jointe", "attachment", "pdf", ".docx", ".xlsx", "fichier", "joint"])
+    has_ioc = bool(re.search(r'\b(?:\d{1,3}\.){3}\d{1,3}\b|CVE-\d{4}-\d{4,7}|[a-fA-F0-9]{32,64}', query))
+    has_meaningful = has_url or has_attachment or has_ioc
+
+    if word_count < 20:
+        return min(confidence, 45.0), True
+    if word_count < 50 and not has_meaningful:
+        return min(confidence, 60.0), True
+    if char_count < 200 and not has_meaningful:
+        return min(confidence, 60.0), True
+    return confidence, False
 
 
 class PhishingExpert(VirtualExpert):
@@ -52,6 +75,12 @@ class PhishingExpert(VirtualExpert):
             evidence.append(f"IOC URL/Domaine suspect: {suspicious_iocs[0]['value'][:60]}")
             confidence = min(confidence + 10, 95)
 
+        # ── RÈGLE-T72: Calibration emails courts ────────────────────────
+        calibrated_confidence, calibration_applied = _calibrate_short_email(query, confidence)
+        if calibration_applied:
+            evidence.append(f"[RÈGLE-T72] Calibration: confiance plafonnée de {confidence:.0f}% à {calibrated_confidence:.0f}% (email court/ambigu)")
+            confidence = calibrated_confidence
+
         if confidence >= 60:
             conclusion = "BLOCK"
             severity = "HIGH" if confidence >= 80 else "MEDIUM"
@@ -70,9 +99,13 @@ class PhishingExpert(VirtualExpert):
             severity = "INFORMATIONAL"
             recommendations = ["Email semble légitime — surveiller par précaution"]
 
+        if calibration_applied:
+            recommendations.append("RÈGLE-T72: Escalade humaine recommandée — email trop court pour analyse fiable")
+
         return {
             "response": f"Analyse phishing: {conclusion}. Confiance: {confidence:.0f}%. "
-                        f"{'Indicateurs confirmés: ' + ', '.join(high_hits[:3]) if high_hits else 'Aucun indicateur fort.'}",
+                        f"{'Indicateurs confirmés: ' + ', '.join(high_hits[:3]) if high_hits else 'Aucun indicateur fort.'}"
+                        + (" Calibration T72 appliquée (email court)." if calibration_applied else ""),
             "conclusion": conclusion,
             "confidence": confidence,
             "evidence": evidence,

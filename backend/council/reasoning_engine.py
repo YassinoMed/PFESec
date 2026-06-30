@@ -219,6 +219,11 @@ class ReasoningEngine:
         # ── Build Decision Journal ────────────────────────────────────────
         completed = [a for a in analyses if a.status == "completed"]
         formatted_decision = self._format_final_decision(final_decision, classification)
+        contradictions_resolved = [
+            {"left": c["left"], "right": c["right"], "resolved_by": c.get("resolved_by", "consensus"), "difference": c.get("difference", "conclusion")}
+            for c in contradictions
+        ]
+
         decision_journal = DecisionJournal(
             session_id=session_id,
             query_summary=query[:200],
@@ -234,10 +239,14 @@ class ReasoningEngine:
                 formatted_decision, consensus, risk, contradictions
             ),
             contradictions_found=len(contradictions),
+            contradictions_resolved=contradictions_resolved,
             false_positive_risk=consensus.get("false_positive_risk", "Low"),
             recommended_next_steps=response_plan.containment[:3] and
                 [a.action for a in response_plan.containment[:3]] or [],
         )
+
+        # Bloc 4: validation obligatoire avant émission
+        decision_journal.validate_before_emission()
 
         return {
             "reasoning_trace": reasoning_trace,
@@ -438,18 +447,4 @@ class ReasoningEngine:
 
     def _format_final_decision(self, raw_decision: str, classification: str) -> str:
         raw = raw_decision.upper()
-        if raw == "BLOCK":
-            if classification in ("phishing_analysis", "email_analysis"):
-                return "PHISHING CONFIRMÉ"
-            elif classification == "malware_analysis":
-                return "MALWARE DÉTECTÉ"
-            elif classification == "url_analysis":
-                return "LIEN MALVEILLANT CONFIRMÉ"
-            elif classification == "ioc_analysis":
-                return "IOC MALVEILLANT DÉTECTÉ"
-            return "MENACE CONFIRMÉE (BLOCK)"
-        elif raw == "ACCEPT":
-            if classification in ("phishing_analysis", "email_analysis"):
-                return "EMAIL LÉGITIME"
-            return "ACTIVITÉ SAINE (ACCEPT)"
-        return "ATTENTE D'INVESTIGATION (UNKNOWN)"
+        return raw  # Retourne le verdict brut pour le journal de décision

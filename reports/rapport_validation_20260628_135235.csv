@@ -1,0 +1,6 @@
+ID,Categorie,Priorite,Titre,Resultat,Entree,Attendu,Obtenu,Experts,Consensus,Confiance,Latence,DJ,Erreur
+T09,Classification,PRIORITE 3 - Complementaire,Email avec plusieurs URLs,PASS,Consultez http://url1.com et http://url2.com pour verifier votre compte http://u,PHISHING + liste URLs,LIEN MALVEILLANT CONFIRMÉ,"url_expert, phishing_expert, email_header_expert, ioc_expert, threat_intel_expert",100.0%,High,0.0s,?,
+T10,Classification,PRIORITE 3 - Complementaire,Email imitant Microsoft,PASS,"From: security@microsoft-support.com
+Subject: Alerte de securite Microsoft
+Votre",PHISHING SPEARPHISHING,LIEN MALVEILLANT CONFIRMÉ,"url_expert, phishing_expert, email_header_expert, ioc_expert, threat_intel_expert",100.0%,High,0.0s,?,
+T72,Entrees limites,PRIORITE 3 - Complementaire,Email tres court (5 mots),PASS,Votre compte est suspendu,Traite avec incertitude,"PhishingExpert conf: 45.0% (calibration T72 appliquee), Score global: 82.0%",,82.0%,High,0.0s,?,

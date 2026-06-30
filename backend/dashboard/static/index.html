@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Master AI — Dashboard Temps Réel</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text-dim: #8b949e;
+    --green: #3fb950;
+    --red: #f85149;
+    --orange: #d29922;
+    --blue: #58a6ff;
+    --purple: #bc8cff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 20px;
+    min-height: 100vh;
+  }
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 24px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; margin-bottom: 20px;
+  }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .header .status { font-size: 13px; color: var(--green); }
+  .header .status.offline { color: var(--red); }
+  .grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin-bottom: 16px;
+  }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; overflow: hidden;
+  }
+  .card.full { grid-column: 1 / -1; }
+  .card h2 {
+    font-size: 14px; font-weight: 600; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 12px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .master-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; margin-bottom: 8px;
+    background: rgba(255,255,255,0.03); border-radius: 6px;
+    transition: background 0.2s;
+  }
+  .master-row:hover { background: rgba(255,255,255,0.06); }
+  .master-icon { font-size: 24px; width: 40px; text-align: center; }
+  .master-info { flex: 1; }
+  .master-name { font-size: 14px; font-weight: 500; }
+  .master-status { font-size: 12px; color: var(--text-dim); }
+  .master-score {
+    font-size: 18px; font-weight: 700; min-width: 60px; text-align: right;
+  }
+  .score-green { color: var(--green); }
+  .score-orange { color: var(--orange); }
+  .score-red { color: var(--red); }
+  .score-blue { color: var(--blue); }
+  .journal {
+    max-height: 400px; overflow-y: auto; font-size: 13px;
+    font-family: 'Consolas', 'SF Mono', monospace; line-height: 1.6;
+  }
+  .journal-entry {
+    padding: 4px 8px; border-left: 3px solid transparent;
+    margin-bottom: 2px; display: flex; gap: 8px;
+  }
+  .journal-entry:hover { background: rgba(255,255,255,0.03); }
+  .journal-icon { width: 24px; text-align: center; flex-shrink: 0; }
+  .journal-source { color: var(--blue); min-width: 120px; flex-shrink: 0; }
+  .journal-msg { flex: 1; color: var(--text); }
+  .journal-time { color: var(--text-dim); font-size: 11px; min-width: 70px; text-align: right; }
+  .journal-entry.discussion { border-left-color: var(--purple); }
+  .journal-entry.consensus { border-left-color: var(--orange); }
+  .journal-entry.contradiction { border-left-color: var(--red); }
+  .journal-entry.master_activation { border-left-color: var(--green); }
+  .journal-entry.expert_query { border-left-color: var(--blue); }
+  .journal-entry.error { border-left-color: var(--red); }
+  .metrics {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  }
+  .metric {
+    text-align: center; padding: 12px;
+    background: rgba(255,255,255,0.03); border-radius: 6px;
+  }
+  .metric-value { font-size: 28px; font-weight: 700; }
+  .metric-label { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  .consensus-bar {
+    height: 24px; background: rgba(255,255,255,0.05); border-radius: 12px;
+    overflow: hidden; margin: 12px 0; position: relative;
+  }
+  .consensus-fill {
+    height: 100%; border-radius: 12px; transition: width 0.5s ease;
+    background: linear-gradient(90deg, var(--red), var(--orange), var(--green));
+  }
+  .consensus-label {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+  }
+  @media (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; }
+    .metrics { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🧠 Multi-Master AI — Security Council Dashboard</h1>
+  <div>
+    <span id="connectionStatus" class="status">● Déconnecté</span>
+    <span style="margin-left:16px;color:var(--text-dim);font-size:13px" id="sessionInfo"></span>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>🛡 Masters AI Actifs</h2>
+    <div id="mastersContainer">
+      <div class="master-row"><div class="master-icon">⏳</div><div class="master-info"><div class="master-name">En attente...</div></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>⚖ Consensus</h2>
+    <div id="consensusContainer">
+      <div class="consensus-bar">
+        <div class="consensus-fill" id="consensusFill" style="width:0%"></div>
+        <div class="consensus-label" id="consensusLabel">— %</div>
+      </div>
+      <div id="consensusVerdict" style="text-align:center;font-size:16px;font-weight:600;color:var(--text-dim)">En attente...</div>
+    </div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card full" style="grid-column:1/-1">
+    <h2>📜 Journal de Discussion Temps Réel</h2>
+    <div class="journal" id="journalContainer">
+      <div class="journal-entry"><span class="journal-msg" style="color:var(--text-dim)">Connexion au serveur WebSocket...</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card full">
+    <h2>📊 Métriques</h2>
+    <div class="metrics">
+      <div class="metric"><div class="metric-value" id="metricEntries">0</div><div class="metric-label">Entrées Journal</div></div>
+      <div class="metric"><div class="metric-value" id="metricMasters">0</div><div class="metric-label">Masters Activés</div></div>
+      <div class="metric"><div class="metric-value" id="metricRounds">0</div><div class="metric-label">Tours Discussion</div></div>
+      <div class="metric"><div class="metric-value" id="metricExperts">0</div><div class="metric-label">Experts Consultés</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const wsUrl = `ws://${location.host}/ws`;
+const EXPERT_MAP = {
+  "threat_master": "🛡️ Threat Master",
+  "soc_master": "💻 SOC Master",
+  "rag_master": "📚 RAG Master",
+  "governance_master": "⚖️ Governance Master",
+  "global_coordinator": "🧠 Global Coordinator",
+  "governance_expert": "⚖️ Governance Expert",
+  "threat_intel_expert": "📡 Threat Intelligence Expert",
+  "Threat Intel Expert": "📡 Threat Intelligence Expert",
+  "knowledge_base_analyst": "📚 Knowledge Base Analyst",
+  "Knowledge Base Analyst": "📚 Knowledge Base Analyst",
+  "ai_governance_compliance_expert": "⚖️ AI Governance & Compliance Analyst",
+  "AI Governance & Compliance Analyst": "⚖️ AI Governance & Compliance Analyst",
+  "cysecbert": "🛡️ CySecBERT",
+  "phishsense": "🦙 PhishSense",
+  "codebert": "💻 CodeBERT",
+  "graphcodebert": "🔗 GraphCodeBERT",
+  "netbert": "📡 NetBERT",
+  "flowtransformer": "🌊 FlowTransformer",
+  "malbert": "🦠 MalBERT",
+  "malconv": "⚙️ MalConv",
+  "attackbert": "🎯 AttackBERT",
+  "iocbert": "🔍 IOCBERT",
+  "urlbert": "🔗 URLBERT",
+  "urlnet": "🌐 URLNet",
+  "logbert": "📝 LogBERT",
+  "deeplog": "📊 DeepLog",
+  "paddleocr": "📄 PaddleOCR",
+  "trocr_small": "📖 TrOCR",
+  "qwen2_5_1_5b": "🧠 Qwen2.5-1.5B",
+  "smollm2_1_7b": "⚡ SmolLM2-1.7B",
+  "phishing_expert": "🎣 Phishing Expert",
+  "email_header_expert": "📧 Email Security Expert",
+  "url_expert": "🌐 URL Reputation Expert",
+  "ioc_expert": "🔍 IOC Expert",
+  "mitre_expert": "🗺️ MITRE Expert",
+  "sigma_expert": "📝 Sigma Expert",
+  "incident_response_expert": "🚑 Incident Response Expert",
+  "soc_analyst_expert": "💻 SOC Analyst Expert",
+  "rag_knowledge_expert": "📚 RAG Knowledge Expert",
+  "vulnerability_expert": "🎯 Vulnerability Expert",
+  "cloud_security_expert": "☁️ Cloud Security Expert",
+  "kubernetes_security_expert": "☸️ Kubernetes Security Expert",
+  "devsecops_expert": "🏗️ DevSecOps Expert",
+  "risk_assessment_virtual_expert": "⚖️ Risk Assessment Expert"
+};
+
+function formatName(name) {
+  if (!name) return '';
+  const clean = name.replace(/^[\p{Emoji}\s]+/u, '').trim();
+  if (clean in EXPERT_MAP) return EXPERT_MAP[clean];
+  const underscoreClean = clean.toLowerCase().replace(/_/g, " ");
+  for (const [key, value] of Object.entries(EXPERT_MAP)) {
+    if (key.toLowerCase().replace(/_/g, " ") === underscoreClean) {
+      return value;
+    }
+  }
+  return name;
+}
+let ws = null;
+let entryCount = 0;
+let masters = {};
+let expertsConsulted = new Set();
+let discussionRounds = 0;
+let autoScroll = true;
+
+function connect() {
+  ws = new WebSocket(wsUrl);
+  const status = document.getElementById('connectionStatus');
+
+  ws.onopen = () => {
+    status.textContent = '● Connecté';
+    status.className = 'status';
+    status.style.color = 'var(--green)';
+  };
+
+  ws.onclose = () => {
+    status.textContent = '● Déconnecté (reconnexion dans 3s)';
+    status.className = 'status offline';
+    setTimeout(connect, 3000);
+  };
+
+  ws.onerror = () => { ws.close(); };
+
+  ws.onmessage = (event) => {
+    try {
+      const entry = JSON.parse(event.data);
+      handleEntry(entry);
+    } catch(e) {}
+  };
+}
+
+function handleEntry(entry) {
+  entryCount++;
+  document.getElementById('metricEntries').textContent = entryCount;
+
+  addJournalEntry(entry);
+  updateMasters(entry);
+  updateMetrics(entry);
+}
+
+function addJournalEntry(entry) {
+  const container = document.getElementById('journalContainer');
+  const div = document.createElement('div');
+  div.className = `journal-entry ${entry.type || ''}`;
+
+  const icon = entry.icon || '•';
+  const source = formatName(entry.source || '');
+  const target = entry.target ? `→ ${formatName(entry.target)}` : '';
+  const msg = entry.message || '';
+  const elapsed = entry.elapsed_ms !== undefined ? `${entry.elapsed_ms.toFixed(0)}ms` : '';
+
+  div.innerHTML = `
+    <span class="journal-icon">${icon}</span>
+    <span class="journal-source">${source} ${target}</span>
+    <span class="journal-msg">${escapeHtml(msg)}</span>
+    <span class="journal-time">${elapsed}</span>
+  `;
+
+  container.appendChild(div);
+
+  if (entry.type === 'master_activation') {
+    const mid = entry.source;
+    if (!masters[mid]) {
+      masters[mid] = { name: mid, score: '—', status: 'Actif', verdict: 'En cours' };
+    }
+  }
+
+  if (entry.type === 'master_completed' && entry.message) {
+    const match = entry.message.match(/(\w+ Master).*?(\w+)\s*\(score:\s*([\d.]+)%\)/);
+    if (match) {
+      const name = match[1].trim();
+      const verdict = match[2];
+      const score = parseFloat(match[3]);
+      const mid = entry.source;
+      if (masters[mid]) {
+        masters[mid].name = name;
+        masters[mid].verdict = verdict;
+        masters[mid].score = score;
+        masters[mid].status = 'Terminé';
+      }
+    }
+  }
+
+  if (entry.type === 'consensus_final') {
+    const match = entry.message.match(/([\d.]+)%/);
+    if (match) {
+      const score = parseFloat(match[1]);
+      updateConsensus(score, entry.message);
+    }
+  }
+
+  if (entry.type === 'expert_query') {
+    expertsConsulted.add(entry.target || entry.source);
+  }
+
+  if (entry.type === 'discussion') {
+    discussionRounds = Math.max(discussionRounds, parseInt(entry.message.match(/Tour (\d+)/)?.[1] || discussionRounds));
+  }
+
+  updateMastersDisplay();
+  updateConsensusDisplay();
+
+  if (autoScroll) {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+function updateMasters(entry) {
+  if (entry.type === 'master_activation') {
+    const mid = entry.source;
+    if (!masters[mid]) {
+      masters[mid] = { name: mid, score: '—', status: 'Actif', verdict: 'En cours' };
+    }
+  }
+  if (entry.type === 'master_completed') {
+    const mid = entry.source;
+    const match = entry.message.match(/(\w+):\s*([\d.]+)%/);
+    if (match && masters[mid]) {
+      masters[mid].verdict = match[1];
+      masters[mid].score = parseFloat(match[2]);
+      masters[mid].status = 'Terminé';
+    }
+  }
+}
+
+function updateMetrics(entry) {
+  document.getElementById('metricMasters').textContent = Object.keys(masters).length || '—';
+  document.getElementById('metricRounds').textContent = discussionRounds || '—';
+  document.getElementById('metricExperts').textContent = expertsConsulted.size || '—';
+}
+
+function updateMastersDisplay() {
+  const container = document.getElementById('mastersContainer');
+  const keys = Object.keys(masters);
+  if (keys.length === 0) return;
+
+  container.innerHTML = keys.map(mid => {
+    const m = masters[mid];
+    const scoreClass = m.score === '—' ? '' :
+      m.score >= 75 ? 'score-green' : m.score >= 50 ? 'score-orange' : 'score-red';
+    const icon = m.status === 'Terminé' ? '✅' : '🔄';
+    return `
+      <div class="master-row">
+        <div class="master-icon">${icon}</div>
+        <div class="master-info">
+          <div class="master-name">${escapeHtml(formatName(m.name || mid))}</div>
+          <div class="master-status">${m.status} · ${m.verdict}</div>
+        </div>
+        <div class="master-score ${scoreClass}">${m.score !== '—' ? m.score + '%' : '—'}</div>
+      </div>`;
+  }).join('');
+}
+
+function updateConsensusDisplay() {}
+
+function updateConsensus(score, message) {
+  const fill = document.getElementById('consensusFill');
+  const label = document.getElementById('consensusLabel');
+  const verdict = document.getElementById('consensusVerdict');
+
+  fill.style.width = `${Math.min(score, 100)}%`;
+  label.textContent = `${score.toFixed(1)}%`;
+  verdict.textContent = message || '';
+  verdict.style.color = score >= 75 ? 'var(--green)' : score >= 50 ? 'var(--orange)' : 'var(--red)';
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  connect();
+});
+</script>
+</body>
+</html>

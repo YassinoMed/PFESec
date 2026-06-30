@@ -13,10 +13,14 @@ export function OrchestratorControlPanel({
   state,
   onPause,
   onRestart,
+  query = "",
+  onQueryChange = () => {},
 }: {
   state: OrchestratorState;
   onPause: () => void;
   onRestart: () => void;
+  query?: string;
+  onQueryChange?: (val: string) => void;
 }) {
   const isCritical = state.confidence >= 80;
 
@@ -48,6 +52,33 @@ export function OrchestratorControlPanel({
 
       {/* Body */}
       <div className="stitch-panel-body sentinel-scroll flex flex-1 flex-col gap-4 overflow-y-auto">
+        {/* INPUT CARD */}
+        <div
+          className="rounded-lg border p-4"
+          style={{
+            backgroundColor: "rgba(30, 30, 42, 0.4)",
+            borderColor: "rgba(0, 209, 255, 0.2)",
+          }}
+        >
+          <div
+            className="sentinel-caps mb-2 text-xs"
+            style={{ color: "var(--stitch-primary)" }}
+          >
+            Threat Event Query
+          </div>
+          <textarea
+            className="w-full bg-neutral-950 border rounded p-2 text-xs text-white focus:outline-none focus:border-cyan-500 font-mono resize-none h-20"
+            style={{
+              borderColor: "rgba(255, 255, 255, 0.1)",
+              backgroundColor: "rgba(0, 0, 0, 0.3)",
+            }}
+            placeholder="Saisir la menace à analyser..."
+            value={query}
+            onChange={(e) => onQueryChange(e.target.value)}
+            disabled={state.status === "ORCHESTRATING"}
+          />
+        </div>
+
         {/* CURRENT STATUS */}
         <div
           className="rounded-lg border p-4"

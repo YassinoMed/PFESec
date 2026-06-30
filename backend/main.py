@@ -25,6 +25,8 @@ from backend.models_registry.models.phishing.wrapper import PhishingModelWrapper
 from backend.models_registry.downloader import ModelDownloader
 from backend.consensus.engine import ConsensusEngine, ModelVote, ConsensusConfig
 from backend.council import CouncilConfig, MasterAIOrchestrator
+from backend.council.multi_master.global_coordinator import GlobalCoordinator
+from backend.dashboard.server import DashboardServer
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 GATEWAY = SecurityAIGateway()
@@ -33,7 +35,7 @@ DOWNLOADER = ModelDownloader()
 CONSENSUS_CONFIG = ConsensusConfig.default()
 CONSENSUS = ConsensusEngine(CONSENSUS_CONFIG)
 COUNCIL_CONFIG = CouncilConfig.default()
-COUNCIL = MasterAIOrchestrator(REGISTRY, COUNCIL_CONFIG)
+COUNCIL = GlobalCoordinator(REGISTRY, COUNCIL_CONFIG)
 
 
 class OrchestratorHandler(BaseHTTPRequestHandler):
@@ -381,6 +383,7 @@ class OrchestratorHandler(BaseHTTPRequestHandler):
 
 def main():
     port = int(os.getenv("ORCHESTRATOR_PORT", "8080"))
+    dashboard_port = int(os.getenv("DASHBOARD_PORT", "8090"))
     
     # ── Initialisation et chargement automatique de tous les modèles ──
     for mid, meta in MODEL_REGISTRY.items():
@@ -391,24 +394,43 @@ def main():
             wrapper = GenericModelWrapper(meta)
         REGISTRY.register_model(wrapper)
                 
+    # Initialiser le Dashboard temps réel
+    dashboard = DashboardServer(host="0.0.0.0", port=dashboard_port)
+    dashboard.attach_journal(COUNCIL.journal)
+
     server = HTTPServer(("0.0.0.0", port), OrchestratorHandler)
 
+    # Démarrer le serveur HTTP passerelle dans un thread séparé
+    import threading
+    server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+    server_thread.start()
+
     print(f"\n{'='*80}")
-    print(f"  SecureRAG Hub — AI Orchestrator")
-    print(f"  Gateway   : http://localhost:{port}/api/v1/security/query")
-    print(f"  Health    : http://localhost:{port}/health")
-    print(f"  Spec      : http://localhost:{port}/api/v1/security/spec")
-    print(f"  Agents    : {len(GATEWAY.orchestrator.agents)} agents disponibles")
-    print(f"  Models    : {len(MODEL_REGISTRY)} modeles dans le registre")
-    print(f"  Registry  : http://localhost:{port}/api/v1/models")
-    print(f"  Consensus : http://localhost:{port}/api/v1/security/consensus")
-    print(f"  Council   : http://localhost:{port}/api/v1/security/council")
+    print(f"  SecureRAG Hub — AI Orchestrator (Multi-Master Mode)")
+    print(f"  Gateway    : http://localhost:{port}/api/v1/security/query")
+    print(f"  Health     : http://localhost:{port}/health")
+    print(f"  Spec       : http://localhost:{port}/api/v1/security/spec")
+    print(f"  Models     : {len(MODEL_REGISTRY)} modeles dans le registre")
+    print(f"  Registry   : http://localhost:{port}/api/v1/models")
+    print(f"  Consensus  : http://localhost:{port}/api/v1/security/consensus")
+    print(f"  Council    : http://localhost:{port}/api/v1/security/council")
+    print(f"  Dashboard  : http://localhost:{dashboard_port}/")
+    print(f"  WebSocket  : ws://localhost:{dashboard_port}/ws")
     print(f"{'='*80}\n")
 
+    async def start_and_wait():
+        await dashboard.start()
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            pass
+
     try:
-        server.serve_forever()
+        # Lancer le serveur aiohttp dans le loop principal et le maintenir actif
+        asyncio.run(start_and_wait())
     except KeyboardInterrupt:
-        print("\n[-] Orchestrateur arrete.")
+        print("\n[-] Serveurs arretes.")
+        asyncio.run(dashboard.stop())
         sys.exit(0)
 
 

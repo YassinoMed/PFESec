@@ -20,6 +20,7 @@ from backend.council.virtual_experts.kubernetes_security_expert import Kubernete
 from backend.council.virtual_experts.devsecops_expert import DevSecOpsExpert
 from backend.council.virtual_experts.risk_assessment_expert import RiskAssessmentVirtualExpert
 from backend.council.virtual_experts.url_expert import URLReputationExpert
+from backend.council.virtual_experts.governance_expert import GovernanceExpert
 
 ALL_VIRTUAL_EXPERTS = [
     PhishingExpert,
@@ -38,6 +39,7 @@ ALL_VIRTUAL_EXPERTS = [
     DevSecOpsExpert,
     RiskAssessmentVirtualExpert,
     URLReputationExpert,
+    GovernanceExpert,
 ]
 
 __all__ = [
@@ -58,4 +60,5 @@ __all__ = [
     "DevSecOpsExpert",
     "RiskAssessmentVirtualExpert",
     "URLReputationExpert",
+    "GovernanceExpert",
 ]

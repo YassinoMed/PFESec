@@ -141,6 +141,12 @@ function getOrchestratorUrl(): string {
 }
 
 const EXPERT_INFO: Record<string, { name: string; emoji: string }> = {
+  threat_master: { name: "Threat Master", emoji: "🛡️" },
+  soc_master: { name: "SOC Master", emoji: "💻" },
+  rag_master: { name: "RAG Master", emoji: "📚" },
+  governance_master: { name: "Governance Master", emoji: "⚖️" },
+  global_coordinator: { name: "Global Coordinator", emoji: "🧠" },
+  governance_expert: { name: "Governance Expert", emoji: "⚖️" },
   cysecbert: { name: "CySecBERT", emoji: "🛡️" },
   phishsense: { name: "PhishSense", emoji: "🦙" },
   codebert: { name: "CodeBERT", emoji: "💻" },
@@ -174,6 +180,18 @@ const EXPERT_INFO: Record<string, { name: string; emoji: string }> = {
   kubernetes_security_expert: { name: "Kubernetes Security Expert", emoji: "☸️" },
   devsecops_expert: { name: "DevSecOps Expert", emoji: "🏗️" },
   risk_assessment_virtual_expert: { name: "Risk Assessment Expert", emoji: "⚖️" },
+};
+
+const anonymizeSpeaker = (text: string): string => {
+  if (!text) return text;
+  const clean = text.replace(/^[\p{Emoji}\s]+/u, "").trim().toLowerCase();
+  
+  for (const [key, info] of Object.entries(EXPERT_INFO)) {
+    if (clean === key || clean === info.name.toLowerCase() || clean.replace(/_/g, " ") === key.replace(/_/g, " ")) {
+      return `${info.emoji} ${info.name}`;
+    }
+  }
+  return text;
 };
 
 const anonymizeExpert = (id: string): string => {
@@ -237,12 +255,115 @@ export default function MasterAIDashboard() {
     setSimProgress(5);
     setSimTimeMs(0);
     setActiveExpertId(null);
+    setExpertNodes([]);
 
     // Start incrementing timer simulating executing latency
     if (simTimeIntervalRef.current) clearInterval(simTimeIntervalRef.current);
     simTimeIntervalRef.current = setInterval(() => {
       setSimTimeMs((prev) => prev + 64);
     }, 64);
+
+    // Open WebSocket for live deliberation updates
+    let ws: WebSocket | null = null;
+    try {
+      const wsUrl = getOrchestratorUrl().replace(/^http/, "ws") + "/ws";
+      const newWs = new WebSocket(wsUrl);
+      ws = newWs;
+      newWs.onmessage = (event) => {
+        try {
+          const entry = JSON.parse(event.data);
+          const time = new Date(entry.timestamp || new Date()).toLocaleTimeString();
+          const speaker = entry.icon ? `${entry.icon} ${entry.source}` : entry.source;
+          let type: MessageType = "evidence";
+          if (entry.type === "error") type = "fallback";
+          else if (entry.type === "contradiction") type = "warning";
+          else if (entry.type === "consensus_final") type = "consensus";
+          else if (entry.type === "master_activation") type = "mission";
+          else if (entry.type === "discussion") type = "validation";
+          else if (entry.type === "report") type = "validation";
+
+          setSimMessages((prev) => {
+            // Éviter les doublons exacts dans l'affichage
+            if (prev.length > 0 && prev[prev.length - 1].content === anonymize(entry.message)) {
+              return prev;
+            }
+            return [
+              ...prev,
+              {
+                time,
+                speaker: anonymizeSpeaker(speaker),
+                type,
+                content: anonymize(entry.message),
+              }
+            ];
+          });
+
+          // Mettre à jour la phase et la progression
+          if (entry.type === "coordinator") {
+            setSimPhase("comprehension");
+            setSimProgress(15);
+          } else if (entry.type === "master_activation") {
+            setSimPhase("planning");
+            setSimProgress(30);
+            setExpertNodes((prev) => {
+              if (prev.some(n => n.id === entry.source)) return prev;
+              return [...prev, {
+                id: entry.source,
+                name: anonymizeExpert(entry.source),
+                state: "finished" as ExpertState,
+                colorClass: "bg-neutral-600",
+              }];
+            });
+          } else if (entry.type === "expert_query") {
+            setSimPhase("analysis");
+            setSimProgress((p) => Math.min(p + 3, 70));
+            setActiveExpertId(entry.target);
+            setExpertNodes((prev) => {
+              if (!prev.some(n => n.id === entry.target)) {
+                return [...prev, {
+                  id: entry.target,
+                  name: anonymizeExpert(entry.target),
+                  state: "analysing" as ExpertState,
+                  colorClass: "bg-neutral-600",
+                }];
+              }
+              return prev.map(n => n.id === entry.target ? { ...n, state: "analysing" as ExpertState } : n);
+            });
+          } else if (entry.type === "expert_response") {
+            setSimProgress((p) => Math.min(p + 3, 80));
+            setActiveExpertId(null);
+            setExpertNodes((prev) =>
+              prev.map(n => n.id === entry.source ? { ...n, state: "finished" as ExpertState } : n)
+            );
+          } else if (entry.type === "discussion") {
+            setSimPhase("debate");
+            setSimProgress((p) => Math.min(p + 2, 90));
+            setExpertNodes((prev) =>
+              prev.map(n => n.state === "finished" ? { ...n, state: "cross_validation" as ExpertState } : n)
+            );
+          } else if (entry.type === "consensus_final") {
+            setSimPhase("consensus");
+            setSimProgress(95);
+          } else if (entry.type === "report") {
+            setSimPhase("consensus");
+            setSimProgress(100);
+          }
+        } catch (err) {
+          console.error("Error parsing WS message:", err);
+        }
+      };
+      // Attendre que le WebSocket soit pleinement connecté avant de lancer la requête
+      await new Promise<void>((resolve) => {
+        if (newWs.readyState === WebSocket.OPEN) {
+          resolve();
+        } else {
+          newWs.onopen = () => resolve();
+          newWs.onerror = () => resolve();
+        }
+      });
+    } catch (err) {
+      console.warn("Failed to open WebSocket, logs will fallback to post-fetch:", err);
+    }
 
     try {
       const res = await fetch(`${getOrchestratorUrl()}/api/v1/security/council`, {
@@ -253,22 +374,20 @@ export default function MasterAIDashboard() {
       const data = (await res.json()) as CouncilResult;
       if (!res.ok) throw new Error((data as any).error || `HTTP ${res.status}`);
 
-      // Initialize expert nodes state
-      const initialNodes = data.selected_models.map((mid) => ({
-        id: mid,
-        name: anonymizeExpert(mid),
-        state: "idle" as ExpertState,
-        colorClass: "bg-neutral-600",
-      }));
-      setExpertNodes(initialNodes);
+      // Attendre un tout petit peu pour que les messages WS finissent de s'afficher
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
-      // Begin step-by-step interactive orchestration logs
-      playSimulation(data, initialNodes);
+      setResult(data);
+      setIsSimulating(false);
+      setLoading(false);
+      if (simTimeIntervalRef.current) clearInterval(simTimeIntervalRef.current);
+      if (ws) ws.close();
     } catch (e) {
       setError((e as Error).message);
       setIsSimulating(false);
       setLoading(false);
       if (simTimeIntervalRef.current) clearInterval(simTimeIntervalRef.current);
+      if (ws) ws.close();
     }
   };
 
@@ -767,8 +886,8 @@ export default function MasterAIDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.02]">
-                  {result.experts.map((exp) => (
-                    <tr key={exp.expert_id} className="hover:bg-white/[0.01] transition-colors">
+                  {result.experts.map((exp, idx) => (
+                    <tr key={`${exp.expert_id}-${idx}`} className="hover:bg-white/[0.01] transition-colors">
                       <td className="py-2.5 font-semibold text-[#f0f4ff]">{anonymize(exp.expert_name)}</td>
                       <td className="py-2.5 text-secondary capitalize">{exp.category.replace(/_/g, " ")}</td>
                       <td className="py-2.5">

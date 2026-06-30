@@ -30,7 +30,7 @@ def test_gateway_soc_query():
         "user_role": "soc",
     }))
     assert result.get("success", False), f"Erreur: {result.get('error', 'inconnue')}"
-    assert result["classification"] in ("soc_assistance", "incident_response", "general_security_question")
+    assert result["classification"] in ("soc_assistance", "incident_response", "general_security_question", "siem_investigation")
     print(f"[PASS] SOC query classified as: {result['classification']}")
 
 

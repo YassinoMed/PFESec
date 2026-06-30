@@ -88,7 +88,7 @@ def test_disagreement_triggers_debate():
 
 def test_absence_of_consensus():
     orch = make_orchestrator(DummyExpert("a", "UNKNOWN", 55), DummyExpert("b", "UNKNOWN", 50))
-    result = run(orch.run("unclear sample", models=["a", "b"]))
+    result = run(orch.run("unclear security event log analysis", models=["a", "b"]))
     assert result.consensus["confidence_level"] == "Low"
     assert result.final_response["conclusion"] == "UNKNOWN"
     print("  PASS: absence_of_consensus")

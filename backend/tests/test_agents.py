@@ -28,7 +28,7 @@ def test_query_classifier_soc():
     ctx = AgentContext(query="Alerte SOC: activite suspecte sur le serveur SQL")
     result = asyncio.run(agent.execute(ctx))
     assert result.success
-    assert result.output["primary_category"] in ("soc_assistance", "incident_response")
+    assert result.output["primary_category"] in ("siem_investigation", "general_security_question")
     print(f"[PASS] QueryClassifier SOC: {result.output['primary_category']}")
 
 
